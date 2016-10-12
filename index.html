@@ -3,118 +3,139 @@
 <head>
   <meta charset="UTF-8">
   <link rel="stylesheet" type="text/css" href="css/main.css">
+  <script type="text/javascript" src="js/jquery-3.0.min.js"></script>
+  <script type="text/javascript" src="js/puissance4.js"></script>
   <title>Puissance 4</title>
 </head>
 <body>
-  <table class="puissance4">
-    <tr class="puissance4_row">
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-    </tr>
-    <tr class="puissance4_row">
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-    </tr>
-    <tr class="puissance4_row">
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-    </tr>
-    <tr class="puissance4_row">
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-    </tr>
-    <tr class="puissance4_row">
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-    </tr>
-    <tr class="puissance4_row">
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-      <td class="puissance4_column">
-      </td>
-    </tr>
-  </table>
+<div>
+  <select>
+    <option value="0">Aléatoire</option>
+  </select>
+  <button id="button-start" value="Start Game"></button>
+</div>
+<table class="puissance4">
+  <thead>
+  <tr id="puissance4-actionRow">
+    <th><button>add</button></th>
+    <th><button>add</button></th>
+    <th><button>add</button></th>
+    <th><button>add</button></th>
+    <th><button>add</button></th>
+    <th><button>add</button></th>
+    <th><button>add</button></th>
+  </tr>
+  </thead>
+  <tbody>
+  <tr class="puissance4_row">
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+  </tr>
+  <tr class="puissance4_row">
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+  </tr>
+  <tr class="puissance4_row">
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+  </tr>
+  <tr class="puissance4_row">
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+  </tr>
+  <tr class="puissance4_row">
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+  </tr>
+  <tr class="puissance4_row">
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+    <td class="puissance4_column">
+    </td>
+  </tr>
+  </tbody>
+</table>
 </body>
 </html>
