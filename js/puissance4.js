@@ -14,19 +14,20 @@ var Master = {
     Master.displayMessage("Début de la partie");
 
     var random = (Math.floor((Math.random() * 10) + 1) <= 5); 
-    if(random){
+    if(random) {
       Master.humanPlay();
-    }else{
+    }
+    else {
       Master.iAPlay();
     }
   },
   addToken: function (numCol,b) {
     //IA
-    if(b){
+    if(b) {
 
     }
     //Humain
-    else{
+    else {
 
     }
   },
@@ -36,7 +37,7 @@ var Master = {
     var listButton = $('#puissance4-actionRow button');
     var max = $('#puissance4-actionRow button:not(:disabled)').length;
 
-    if($('#algo').val() == 0){
+    if ($('#algo').val() == 0) {
       var nombreAleatoire = Math.floor(Math.random() * (max-1));
     }
     Master.refreshButton();
@@ -47,7 +48,7 @@ var Master = {
   checkEnd: function () {
 
   },
-  displayMessage: function (str){
+  displayMessage: function (str) {
     setTimeout(function() {
       $('#message').html(str);
     }, 500);
