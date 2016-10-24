@@ -1,6 +1,10 @@
+const HUMAN_PLAYER = 0;
+const IA_PLAYER = 1;
+
 var Master = {
   init: function () {
     console.log('Initialisation');
+    this.addToken(1, HUMAN_PLAYER);
     // checker la diffultée
     $('#button-start').click(function () {
       Master.startGame();
@@ -23,14 +27,22 @@ var Master = {
       Master.iAPlay();
     }
   },
-  addToken: function (numCol, b) {
-    //IA
-    if (b) {
-
+  addToken: function (column_number, player_type) {
+    console.log('addToken');
+    if (player_type == HUMAN_PLAYER) {
+      console.log('human_player');
+      $('.column_' + column_number).toArray().reverse().forEach(function (element) {
+        if ($(element).has('div').length == 0) {
+          $(element).append('<div class="human_token"></div>')
+        }
+      });
     }
-    //Humain
+    else if (player_type == IA_PLAYER) {
+      console.log('ia_player');
+    }
     else {
-
+      alert('AddToken  : player_type inconnu');
+      return false;
     }
   },
   iAPlay: function() {
@@ -86,7 +98,7 @@ var Master = {
     $('#puissance4-actionRow button').removeAttr('disabled');
   },
   isFullColumn: function (column_number) {
-    return $('#row-' + column_number + ' .column-1').has("div").length ? true : false;
+    return $('#row-1 .column_' + column_number).has("div").length ? true : false;
   }
 }
 $(document).ready(function () {
