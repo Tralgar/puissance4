@@ -32,6 +32,7 @@ var Master = {
     }
   },
   iAPlay: function() {
+    Master.disableButton();
     Master.displayMessage("Tour IA");
 
     var listButton = $('#puissance4-actionRow button');
@@ -44,6 +45,14 @@ var Master = {
   },
   humanPlay: function() {
     Master.displayMessage("Tour Humain");
+  },
+  getColumnPlay: function (){
+    var aTable = new Array;
+    for(var i = 1; i < 7; i++){
+      if(!isFullColumn(i)){
+        aTable.push(i);
+      }
+    }
   },
   checkEnd: function () {
 
@@ -58,7 +67,7 @@ var Master = {
     $('#puissance4-actionRow button').attr('disabled','disabled');
   },
   refreshButton: function(){
-    //On désactive les boutons de base
+    //On active les boutons de base
     $('#puissance4-actionRow button').removeAttr('disabled');
   }
 }
