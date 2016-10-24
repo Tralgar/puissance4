@@ -14,6 +14,7 @@ var Master = {
       var coord = Master.addToken($(this).data('col'),HUMAN_PLAYER);
       if(Master.checkEnd(coord['x'],coord['y'],HUMAN_PLAYER)){
         Master.displayMessage("Vainqueur : Humain");
+        Master.disableButton();
       }
       else{
         Master.iAPlay();
@@ -22,6 +23,7 @@ var Master = {
   },
   startGame: function () {
     $('.token').remove();
+    Master.refreshButton();
     Master.displayMessage("Début de la partie");
 
     var random = (Math.floor((Math.random() * 10) + 1) <= 5);
@@ -109,15 +111,78 @@ var Master = {
       toCheck = 'human_token';
     }
 
+    var win = false;
     var cpt = 0;
     //On check horizontalement
-    $('#row-'+x+ ' td').each(function(){
-      if($(this).children().length>0){
-        cpt++;
-        if(cpt == 4){return true;}
+    /*for(var i=1;i<=7;i++){
+      elem = $('#row-'+x+ ' .column_'+i);
+      if(elem.children().length>0){
+        token = elem.children();
+        if(token.hasClass(toCheck)){cpt++;}
+        else{cpt--;}
       }
-    });
-    return false;
+      else{cpt = 0;}
+      if(cpt == 4){
+        win = true;
+      }
+    }*/
+
+    //On check verticalement
+    var cpt = 0;
+    /*for(var i=1;i<=7;i++){
+      elem = $('#row-'+i+ ' .column_'+y);
+      if(elem.children().length>0){
+        token = elem.children();
+        if(token.hasClass(toCheck)){cpt++;}
+        else{cpt--;}
+      }
+      else{cpt = 0;}
+      if(cpt == 4){
+        win = true;
+      }
+    }*/
+
+    //On check diagonale 1
+    var cpt = 0;
+    var start = x-(y-1);
+    if(start<0){start=0;}
+    var j =1;
+    for(var i = start;i<=7;i++){
+      elem = $('#row-'+i+ ' .column_'+j);
+      if(elem.children().length>0){
+        token = elem.children();
+        if(token.hasClass(toCheck)){cpt++;}
+        else{cpt--;}
+      }
+      else{cpt = 0;}
+      if(cpt == 4){
+        win = true;
+      }
+      j++;
+    }
+
+    //On check diagonale 2
+    var cpt = 0;
+    var start = x+(y-1);
+    var j = 1;
+    if(start>7){start=7;var j = start-7;}
+    
+    for(var i = start;i>0;i--){
+      elem = $('#row-'+j+ ' .column_'+i);
+      console.log(j+'/'+i);
+      if(elem.children().length>0){
+        token = elem.children();
+        if(token.hasClass(toCheck)){cpt++;}
+        else{cpt--;}
+      }
+      else{cpt = 0;}
+      if(cpt == 4){
+        win = true;
+      }
+      j++;
+    }
+
+    return win;
   },
   displayMessage: function (str) {
     setTimeout(function () {
