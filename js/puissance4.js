@@ -13,17 +13,17 @@ var Master = {
   startGame: function () {
     Master.displayMessage("Début de la partie");
 
-    var random = (Math.floor((Math.random() * 10) + 1) <= 5); 
-    if(random) {
+    var random = (Math.floor((Math.random() * 10) + 1) <= 5);
+    if (random) {
       Master.humanPlay();
     }
     else {
       Master.iAPlay();
     }
   },
-  addToken: function (numCol,b) {
+  addToken: function (numCol, b) {
     //IA
-    if(b) {
+    if (b) {
 
     }
     //Humain
@@ -31,37 +31,40 @@ var Master = {
 
     }
   },
-  iAPlay: function() {
+  iAPlay: function () {
     Master.displayMessage("Tour IA");
 
     var listButton = $('#puissance4-actionRow button');
     var max = $('#puissance4-actionRow button:not(:disabled)').length;
 
     if ($('#algo').val() == 0) {
-      var nombreAleatoire = Math.floor(Math.random() * (max-1));
+      var nombreAleatoire = Math.floor(Math.random() * (max - 1));
     }
     Master.refreshButton();
   },
-  humanPlay: function() {
+  humanPlay: function () {
     Master.displayMessage("Tour Humain");
   },
   checkEnd: function () {
 
   },
   displayMessage: function (str) {
-    setTimeout(function() {
+    setTimeout(function () {
       $('#message').html(str);
     }, 500);
   },
-  disableButton: function(){
+  disableButton: function () {
     //On désactive les boutons de base
-    $('#puissance4-actionRow button').attr('disabled','disabled');
+    $('#puissance4-actionRow button').attr('disabled', 'disabled');
   },
-  refreshButton: function(){
+  refreshButton: function () {
     //On désactive les boutons de base
     $('#puissance4-actionRow button').removeAttr('disabled');
+  },
+  isFullColumn: function (column_number) {
+    return $('#row-' + column_number + ' .column-1').has("div").length ? true : false;
   }
 }
-$(document).ready(function() {
+$(document).ready(function () {
   Master.init();
 });
