@@ -1,5 +1,6 @@
 const HUMAN_PLAYER = 0;
 const IA_PLAYER = 1;
+var arbre;
 
 var Master = {
   init: function () {
@@ -17,11 +18,15 @@ var Master = {
         Master.disableButton();
       }
       else{
+        Master.evalBranche();
         Master.iAPlay();
       }
     });
   },
   startGame: function () {
+    //On initialise l'arbre
+    var aFils = Master.creerFils();
+    arbre = new Arbre(aFils);
     $('.token').remove();
     Master.refreshButton();
     Master.displayMessage("Début de la partie");
@@ -31,6 +36,7 @@ var Master = {
       Master.humanPlay();
     }
     else {
+      Master.evalBranche();
       Master.iAPlay();
     }
   },
@@ -66,6 +72,9 @@ var Master = {
     else {
       alert('AddToken  : player_type inconnu');
     }
+    //DEBUT on recrée les branches
+    arbre = new Arbre(Master.creerFils());
+    //FIN
     return aResult;
   },
   iAPlay: function() {
@@ -82,6 +91,17 @@ var Master = {
       var nombreAleatoire = Math.floor(Math.random() * (aColonneJouable.length - 0));
       Master.addToken(aColonneJouable[nombreAleatoire],IA_PLAYER);
     }
+    //Méthode Min-Max
+    else if($('#algo').val() == 1) {
+      //On parcours les fils de la branche en cours
+      var colMax = null;
+      for(i=0;i<arbre.fils.length;i++){
+        if(colMax == null || colMax > arbre.fils[i].valeur){
+          colMax = arbre.fils[i].colonne;
+        }
+      }
+      Master.addToken(colMax,IA_PLAYER);
+    }
     Master.refreshButton();
     Master.humanPlay();
   },
@@ -89,7 +109,6 @@ var Master = {
     //On désactive les boutons des colonnes pleines
     for(var i = 1; i <= 7; i++){
       if(Master.isFullColumn(i)){
-        console.log('#button'+i);
         $('#button'+i).attr('disabled', 'disabled');
       }
     }
@@ -114,7 +133,7 @@ var Master = {
     var win = false;
     var cpt = 0;
     //On check horizontalement
-    /*for(var i=1;i<=7;i++){
+    for(var i=1;i<=7;i++){
       elem = $('#row-'+x+ ' .column_'+i);
       if(elem.children().length>0){
         token = elem.children();
@@ -125,11 +144,11 @@ var Master = {
       if(cpt == 4){
         win = true;
       }
-    }*/
+    }
 
     //On check verticalement
     var cpt = 0;
-    /*for(var i=1;i<=7;i++){
+    for(var i=1;i<=7;i++){
       elem = $('#row-'+i+ ' .column_'+y);
       if(elem.children().length>0){
         token = elem.children();
@@ -140,7 +159,7 @@ var Master = {
       if(cpt == 4){
         win = true;
       }
-    }*/
+    }
 
     //On check diagonale 1
     var cpt = 0;
@@ -163,13 +182,13 @@ var Master = {
 
     //On check diagonale 2
     var cpt = 0;
-    var start = x+(y-1);
-    var j = 1;
-    if(start>7){start=7;var j = start-7;}
+    var startY = 7;
+    var startX = y - (7-x);
+    var j = startX;
+    if(startY < 0){startY =0;}
     
-    for(var i = start;i>0;i--){
+    for(var i = startY;i>0;i--){
       elem = $('#row-'+j+ ' .column_'+i);
-      console.log(j+'/'+i);
       if(elem.children().length>0){
         token = elem.children();
         if(token.hasClass(toCheck)){cpt++;}
@@ -199,6 +218,53 @@ var Master = {
   },
   isFullColumn: function (column_number) {
     return $('#row-1 .column_' + column_number + ' div').length ? true : false;
+  },
+  creerFils: function(){
+    var aColonneJouable = Master.getColumnPlay();
+    var aFils = new Array;
+    for(i=0;i<aColonneJouable.length;i++){
+      var colonne = aColonneJouable[i];
+      var value = 1;
+      var noeudTmp = new Noeud(colonne,value,new Array);
+      aFils.push(noeudTmp);
+    }
+    return aFils;
+  },
+  evalBranche:function(){
+    var typeToken = 'ia_token';
+
+    for(i=0;i<arbre.fils.length;i++){
+      valeur = 0;
+      col = arbre.fils[i].colonne;
+      var casec = $('.column_'+col+':not(:has(div)):last');
+      caseX = casec.data('col');
+      caseY = casec.data('row');
+      if($(".puissance4_column[data-col='"+(caseX+1)+"'][data-row='"+(caseY)+"']:has(div."+typeToken+")").length>0){
+        valeur++;
+      }
+      if($(".puissance4_column[data-col='"+(caseX+1)+"'][data-row='"+(caseY+1)+"']:has(div."+typeToken+")").length>0){
+        valeur++;
+      }
+      if($(".puissance4_column[data-col='"+(caseX+1)+"'][data-row='"+(caseY-1)+"']:has(div."+typeToken+")").length>0){
+        valeur++;
+      }
+      if($(".puissance4_column[data-col='"+(caseX)+"'][data-row='"+(caseY+1)+"']:has(div."+typeToken+")").length>0){
+        valeur++;
+      }
+      if($(".puissance4_column[data-col='"+(caseX)+"'][data-row='"+(caseY+1)+"']:has(div."+typeToken+")").length>0){
+        valeur++;
+      }
+      if($(".puissance4_column[data-col='"+(caseX-1)+"'][data-row='"+(caseY)+"']:has(div."+typeToken+")").length>0){
+        valeur++;
+      }
+      if($(".puissance4_column[data-col='"+(caseX-1)+"'][data-row='"+(caseY+1)+"']:has(div."+typeToken+")").length>0){
+        valeur++;
+      }
+      if($(".puissance4_column[data-col='"+(caseX-1)+"'][data-row='"+(caseY-1)+"']:has(div."+typeToken+")").length>0){
+        valeur++;
+      }
+      arbre.fils[i].valeur = valeur;
+    }
   }
 }
 $(document).ready(function () {
