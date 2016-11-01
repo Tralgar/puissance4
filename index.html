@@ -12,11 +12,35 @@
 	<h1>Puissance 4</h1>
 	<div id="message"></div>
 	<div>
-	  <select id="algo">
-	    <option value="0">Aléatoire</option>
-	    <option value="1">Min Max</option>
-	  </select>
+		<span>
+			JOUEUR 1 :
+			<select  disabled id="typeJoueur1">
+				<option value="1">IA</option>
+			</select>
+			<select id="algo1">
+				<option value="0">Aléatoire</option>
+				<option value="1">Max</option>
+				<option value="2">Max avec Contre (todo)</option>
+			</select>
+		</span>
+		<br>
+		<span>
+			JOUEUR 2 : 
+			<select id="typeJoueur2">
+				<option value="0">Humain</option>
+				<option value="1">IA</option>
+			</select>
+			<select id="algo2">
+				<option value="0">Aléatoire</option>
+				<option value="1">Max</option>
+				<option value="2">Max avec Contre (todo)</option>
+			</select>
+		</span>
+	  <br>
+	  <br>
 	  <button id="button-start" value="Start Game">Start game</button>
+	  <br>
+	  <br>
 	</div>
 	<table class="puissance4">
 	  <thead>

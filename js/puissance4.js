@@ -1,5 +1,7 @@
 const HUMAN_PLAYER = 0;
 const IA_PLAYER = 1;
+const IA_PLAYER2 = 2;
+
 var arbre;
 
 var Master = {
@@ -18,8 +20,8 @@ var Master = {
         Master.disableButton();
       }
       else{
-        Master.evalBranche();
-        Master.iAPlay();
+        Master.evalBranche(IA_PLAYER);
+        Master.iAPlay(IA_PLAYER);
       }
     });
   },
@@ -33,23 +35,32 @@ var Master = {
 
     var random = (Math.floor((Math.random() * 10) + 1) <= 5);
     if (random) {
-      Master.humanPlay();
+      if($('#typeJoueur2').val()==1){
+        Master.evalBranche(IA_PLAYER2);
+        Master.iAPlay(IA_PLAYER2);
+      }else{
+        Master.humanPlay();
+      }
     }
     else {
-      Master.evalBranche();
-      Master.iAPlay();
+      Master.evalBranche(IA_PLAYER);
+      Master.iAPlay(IA_PLAYER);
     }
   },
   addToken: function (column_number, player_type) {
     var aResult = Array;
     aResult['y'] = column_number;
-    if (player_type == HUMAN_PLAYER) {
-      console.log('human_player');
+    if (player_type == HUMAN_PLAYER || player_type == IA_PLAYER2) {
       end = false;
       $('.column_' + column_number).toArray().reverse().forEach(function (element) {
         if ($(element).has('div').length == 0) {
           if(!end){
-            $(element).append('<div class="token human_token"></div>');
+            if (player_type == HUMAN_PLAYER){
+              $(element).append('<div class="token human_token"></div>');
+            }
+            else{
+              $(element).append('<div class="token ia_token2"></div>');
+            }
             aResult['x'] = $(element).parent().data('ligne');
             end = true;
           } 
@@ -57,7 +68,6 @@ var Master = {
       });
     }
     else if (player_type == IA_PLAYER) {
-      console.log('ia_player');
       end = false;
       $('.column_' + column_number).toArray().reverse().forEach(function (element) {
         if ($(element).has('div').length == 0) {
@@ -77,9 +87,9 @@ var Master = {
     //FIN
     return aResult;
   },
-  iAPlay: function() {
+  iAPlay: function(TYPE_IA) {
     Master.disableButton();
-    Master.displayMessage("Tour IA");
+    Master.displayMessage("Tour IA "+TYPE_IA);
 
     var listButton = $('#puissance4-actionRow button');
 
@@ -87,23 +97,53 @@ var Master = {
     aColonneJouable = Master.getColumnPlay();
 
     //Méthode ALEATOIRE
-    if ($('#algo').val() == 0) {
+    if ($('#algo'+TYPE_IA).val() == 0) {
       var nombreAleatoire = Math.floor(Math.random() * (aColonneJouable.length - 0));
-      Master.addToken(aColonneJouable[nombreAleatoire],IA_PLAYER);
+      coord = Master.addToken(aColonneJouable[nombreAleatoire],TYPE_IA);
     }
     //Méthode Min-Max
-    else if($('#algo').val() == 1) {
+    else if($('#algo'+TYPE_IA).val() == 1) {
       //On parcours les fils de la branche en cours
       var colMax = null;
+      var arrayMax = new Array;
       for(i=0;i<arbre.fils.length;i++){
-        if(colMax == null || colMax > arbre.fils[i].valeur){
-          colMax = arbre.fils[i].colonne;
+        //console.log(arbre.fils[i]);
+        if(colMax == null || arbre.fils[i].valeur > colMax){
+          colMax = arbre.fils[i].valeur;
+          arrayMax = new Array;
+          arrayMax[0] = arbre.fils[i].colonne;
+          
+        }
+        else if(colMax == arbre.fils[i].valeur){
+          arrayMax[arrayMax.length] = arbre.fils[i].colonne;
         }
       }
-      Master.addToken(colMax,IA_PLAYER);
+      //SI plusieurs possibilité ont les même valeurs on choisi aléatoirement
+      var nombreAleatoire = Math.floor(Math.random() * (arrayMax.length - 0));
+      coord = Master.addToken(arrayMax[nombreAleatoire],TYPE_IA);
     }
-    Master.refreshButton();
-    Master.humanPlay();
+    //WIN
+    if(Master.checkEnd(coord['x'],coord['y'],TYPE_IA)){
+      Master.displayMessage("Vainqueur : IA " + TYPE_IA);
+      Master.disableButton();
+    }
+    //On continue
+    else{
+      Master.refreshButton();
+      if($("#typeJoueur2").val() == 0){
+        Master.humanPlay();
+      }else{
+        if(TYPE_IA== 1){
+          Master.evalBranche(IA_PLAYER2);
+          Master.iAPlay(IA_PLAYER2);
+        }
+        else{
+          Master.evalBranche(IA_PLAYER);
+          Master.iAPlay(IA_PLAYER);
+        }
+        
+      }
+    }
   },
   humanPlay: function () {
     //On désactive les boutons des colonnes pleines
@@ -128,6 +168,9 @@ var Master = {
     var toCheck = 'ia_token';
     if(type==HUMAN_PLAYER){
       toCheck = 'human_token';
+    }
+    if(type==IA_PLAYER2){
+      toCheck = 'ia_token2';
     }
 
     var win = false;
@@ -230,40 +273,73 @@ var Master = {
     }
     return aFils;
   },
-  evalBranche:function(){
+  evalBranche:function(type){
     var typeToken = 'ia_token';
+    if(type==HUMAN_PLAYER){
+      typeToken = 'human_token';
+    }
+    if(type==IA_PLAYER2){
+      typeToken = 'ia_token2';
+    }
 
+    //On donne des points en fonction du nombre de jeton de même couleurs sur les cases annexes (ex : v=5 si on est entouré de 5 jetons)
     for(i=0;i<arbre.fils.length;i++){
       valeur = 0;
       col = arbre.fils[i].colonne;
       var casec = $('.column_'+col+':not(:has(div)):last');
       caseX = casec.data('col');
       caseY = casec.data('row');
-      if($(".puissance4_column[data-col='"+(caseX+1)+"'][data-row='"+(caseY)+"']:has(div."+typeToken+")").length>0){
-        valeur++;
+
+      //Horizontal
+      var ptsX = 0;
+      var multiplicateur = 1;
+      for(var j = 1 ;j<4;j++){
+        if($(".puissance4_column[data-col='"+(caseX+j)+"'][data-row='"+(caseY)+"']:has(div."+typeToken+")").length>0){ptsX=ptsX+(1*multiplicateur);multiplicateur++;}
+        else{ break;}
       }
-      if($(".puissance4_column[data-col='"+(caseX+1)+"'][data-row='"+(caseY+1)+"']:has(div."+typeToken+")").length>0){
-        valeur++;
+      for(var k = 1 ;k<4;k++){
+        if($(".puissance4_column[data-col='"+(caseX-k)+"'][data-row='"+(caseY)+"']:has(div."+typeToken+")").length>0){ptsX=ptsX+(1*multiplicateur);multiplicateur++;}
+        else{ break;}
       }
-      if($(".puissance4_column[data-col='"+(caseX+1)+"'][data-row='"+(caseY-1)+"']:has(div."+typeToken+")").length>0){
-        valeur++;
+      //Vertical
+      var ptsY = 0;
+      var multiplicateur = 1;
+      for(var j = 1 ;j<4;j++){
+        if($(".puissance4_column[data-col='"+(caseX)+"'][data-row='"+(caseY+j)+"']:has(div."+typeToken+")").length>0){ptsY=ptsY+(1*multiplicateur);multiplicateur++;}
+        else{ break;}
       }
-      if($(".puissance4_column[data-col='"+(caseX)+"'][data-row='"+(caseY+1)+"']:has(div."+typeToken+")").length>0){
-        valeur++;
+      for(var k = 1 ;k<4;k++){
+        if($(".puissance4_column[data-col='"+(caseX)+"'][data-row='"+(caseY-k)+"']:has(div."+typeToken+")").length>0){ptsY=ptsY+(1*multiplicateur);multiplicateur++;}
+        else{ break;}
       }
-      if($(".puissance4_column[data-col='"+(caseX)+"'][data-row='"+(caseY+1)+"']:has(div."+typeToken+")").length>0){
-        valeur++;
+      //Diagonale 1
+      var ptsD1 = 0;
+      var multiplicateur = 1;
+      for(var j = 1 ;j<4;j++){
+        if($(".puissance4_column[data-col='"+(caseX+j)+"'][data-row='"+(caseY+j)+"']:has(div."+typeToken+")").length>0){ptsD1=ptsD1+(1*multiplicateur);multiplicateur++;}
+        else{ break;}
       }
-      if($(".puissance4_column[data-col='"+(caseX-1)+"'][data-row='"+(caseY)+"']:has(div."+typeToken+")").length>0){
-        valeur++;
+      for(var k = 1 ;k<4;k++){
+        if($(".puissance4_column[data-col='"+(caseX-k)+"'][data-row='"+(caseY-k)+"']:has(div."+typeToken+")").length>0){ptsD1=ptsD1+(1*multiplicateur);multiplicateur++;}
+        else{ break;}
       }
-      if($(".puissance4_column[data-col='"+(caseX-1)+"'][data-row='"+(caseY+1)+"']:has(div."+typeToken+")").length>0){
-        valeur++;
+      //Diagonale 2
+      var ptsD2 = 0;
+      var multiplicateur = 1;
+      for(var j = 1 ;j<4;j++){
+        if($(".puissance4_column[data-col='"+(caseX+j)+"'][data-row='"+(caseY-j)+"']:has(div."+typeToken+")").length>0){ptsD2=ptsD2+(1*multiplicateur);multiplicateur++;}
+        else{ break;}
       }
-      if($(".puissance4_column[data-col='"+(caseX-1)+"'][data-row='"+(caseY-1)+"']:has(div."+typeToken+")").length>0){
-        valeur++;
+      for(var k = 1 ;k<4;k++){
+        if($(".puissance4_column[data-col='"+(caseX-k)+"'][data-row='"+(caseY+k)+"']:has(div."+typeToken+")").length>0){ptsD2=ptsD2+(1*multiplicateur);multiplicateur++;}
+        else{ break;}
       }
-      arbre.fils[i].valeur = valeur;
+
+      arbre.fils[i].valeur = ptsX+ptsY+ptsD1+ptsD2;
+      arbre.fils[i].ptsX = ptsX;
+      arbre.fils[i].ptsY = ptsY;
+      arbre.fils[i].ptsD1 = ptsD1;
+      arbre.fils[i].ptsD2 = ptsD2;
     }
   }
 }
