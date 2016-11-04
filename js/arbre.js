@@ -1,7 +1,6 @@
 const NIVEAUARBRE = 4;
 
 function Arbre(aFils){
-  console.log("construction de l'arbre");
   this.fils = aFils;
 }
 

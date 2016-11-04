@@ -47,6 +47,22 @@ var Master = {
       Master.iAPlay(IA_PLAYER);
     }
   },
+  //Renvoie les coodonnée X/Y de la prochaine case à jouer d'une colonne
+  getCoordJetonByColumn: function(column_number){
+    var aResult = new Array;
+    aResult['y'] = column_number;
+    end = false;
+    $('.column_' + column_number).toArray().reverse().forEach(function (element) {
+      if ($(element).has('div').length == 0) {
+        if(!end){
+          aResult['x'] = $(element).parent().data('ligne');
+          end = true;
+        } 
+      }
+    });
+    if(aResult['x']<=0){return false;}
+    return aResult;
+  },
   addToken: function (column_number, player_type) {
     var aResult = Array;
     aResult['y'] = column_number;
@@ -101,7 +117,7 @@ var Master = {
       var nombreAleatoire = Math.floor(Math.random() * (aColonneJouable.length - 0));
       coord = Master.addToken(aColonneJouable[nombreAleatoire],TYPE_IA);
     }
-    //Méthode Min-Max
+    //Méthode Max
     else if($('#algo'+TYPE_IA).val() == 1) {
       //On parcours les fils de la branche en cours
       var colMax = null;
@@ -164,13 +180,24 @@ var Master = {
     return aTable;
   },
   //On check si on finit on plaçant un pion au coord (x,y)
-  checkEnd: function (x,y,type) {
+  checkEnd: function (x,y,type,forcePrevision) {
+    if(forcePrevision == 'undefined'){
+      forcePrevision = false;
+    }
     var toCheck = 'ia_token';
     if(type==HUMAN_PLAYER){
       toCheck = 'human_token';
     }
     if(type==IA_PLAYER2){
       toCheck = 'ia_token2';
+    }
+
+    //Ajout d'un jeton invisible sur la case de prevision
+    if(forcePrevision){
+      var elem = $(".puissance4_column[data-col='"+(y)+"'][data-row='"+(x)+"']");
+      if(elem.length>0){
+        elem.append('<div style="display:none" class="invisibleToDelete ' + toCheck +'"></div>');
+      }
     }
 
     var win = false;
@@ -181,7 +208,7 @@ var Master = {
       if(elem.children().length>0){
         token = elem.children();
         if(token.hasClass(toCheck)){cpt++;}
-        else{cpt--;}
+        else{cpt = 0;}
       }
       else{cpt = 0;}
       if(cpt == 4){
@@ -196,7 +223,7 @@ var Master = {
       if(elem.children().length>0){
         token = elem.children();
         if(token.hasClass(toCheck)){cpt++;}
-        else{cpt--;}
+        else{cpt = 0;}
       }
       else{cpt = 0;}
       if(cpt == 4){
@@ -214,7 +241,7 @@ var Master = {
       if(elem.children().length>0){
         token = elem.children();
         if(token.hasClass(toCheck)){cpt++;}
-        else{cpt--;}
+        else{cpt = 0;}
       }
       else{cpt = 0;}
       if(cpt == 4){
@@ -235,13 +262,17 @@ var Master = {
       if(elem.children().length>0){
         token = elem.children();
         if(token.hasClass(toCheck)){cpt++;}
-        else{cpt--;}
+        else{cpt = 0;}
       }
       else{cpt = 0;}
       if(cpt == 4){
         win = true;
       }
       j++;
+    }
+
+    if(forcePrevision){
+      $('.invisibleToDelete').remove();
     }
 
     return win;
@@ -273,6 +304,9 @@ var Master = {
     }
     return aFils;
   },
+  //Donne un nombre de point à la branche en fonction de son potentiel
+  // Algo 1 : donne des points en fonction du nombre de doublet/triplet que va former le nouveau jeton (dans tous les sens)
+  // Algo 2 : donner un grand nombre de point pour contrer adversaire ayant un triplet
   evalBranche:function(type){
     var typeToken = 'ia_token';
     if(type==HUMAN_PLAYER){
@@ -334,12 +368,29 @@ var Master = {
         if($(".puissance4_column[data-col='"+(caseX-k)+"'][data-row='"+(caseY+k)+"']:has(div."+typeToken+")").length>0){ptsD2=ptsD2+(1*multiplicateur);multiplicateur++;}
         else{ break;}
       }
-
       arbre.fils[i].valeur = ptsX+ptsY+ptsD1+ptsD2;
       arbre.fils[i].ptsX = ptsX;
       arbre.fils[i].ptsY = ptsY;
       arbre.fils[i].ptsD1 = ptsD1;
       arbre.fils[i].ptsD2 = ptsD2;
+
+      //On donne des points pour les contres, si l'ennemi peut gagner avec une case on la bloque
+      var coord = Master.getCoordJetonByColumn(arbre.fils[i].colonne);
+      var endNextMove = false;
+      if(type==IA_PLAYER){
+        var player_ennemi = IA_PLAYER2;
+        if($('#typeJoueur2').val()==0){
+          player_ennemi = HUMAN_PLAYER;
+        }
+        endNextMove = Master.checkEnd(coord['x'],coord['y'],player_ennemi,true);
+      }
+      if(type==IA_PLAYER2){
+        endNextMove = Master.checkEnd(coord['x'],coord['y'],IA_PLAYER,true);
+      }
+      if(endNextMove){
+        arbre.fils[i].valeur += 100;
+        arbre.fils[i].ptsContre = 100;
+      }
     }
   }
 }
