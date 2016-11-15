@@ -4,6 +4,16 @@ const IA_PLAYER = 1;
 var Master = {
   init: function () {
     console.log('Initialisation');
+    var myNode = new Node(1, 1);
+    Master.getColumnPlay().forEach(function (case_y) {
+      if (case_y == this.y) {
+        case_y++;
+      }
+      console.log(Master.getCasePlay(case_y));
+      //myNode.children.push(new Node(this.getCasePlay(case_y), case_y));
+    });
+    myNode.toString();
+
     // checker la diffultée
     $('#button-start').click(function () {
       Master.startGame();
@@ -11,11 +21,11 @@ var Master = {
 
     //L'humain clique sur le bouton, ajoute son pion et redonne la main à l'IA
     $('#puissance4-actionRow th button').click(function () {
-      var coord = Master.addToken($(this).data('col'),HUMAN_PLAYER);
-      if(Master.checkEnd(coord['x'],coord['y'],HUMAN_PLAYER)){
+      var coord = Master.addToken($(this).data('col'), HUMAN_PLAYER);
+      if (Master.checkEnd(coord['x'], coord['y'], HUMAN_PLAYER)) {
         Master.displayMessage("Vainqueur : Humain");
       }
-      else{
+      else {
         Master.iAPlay();
       }
     });
@@ -36,15 +46,14 @@ var Master = {
     var aResult = Array;
     aResult['y'] = column_number;
     if (player_type == HUMAN_PLAYER) {
-      console.log('human_player');
       end = false;
       $('.column_' + column_number).toArray().reverse().forEach(function (element) {
         if ($(element).has('div').length == 0) {
-          if(!end){
+          if (!end) {
             $(element).append('<div class="token human_token"></div>');
             aResult['x'] = $(element).parent().data('ligne');
             end = true;
-          } 
+          }
         }
       });
     }
@@ -53,11 +62,11 @@ var Master = {
       end = false;
       $('.column_' + column_number).toArray().reverse().forEach(function (element) {
         if ($(element).has('div').length == 0) {
-          if(!end){
+          if (!end) {
             $(element).append('<div class="token ia_token"></div>');
             aResult['x'] = $(element).parent().data('ligne');
             end = true;
-          } 
+          }
         }
       });
     }
@@ -66,7 +75,7 @@ var Master = {
     }
     return aResult;
   },
-  iAPlay: function() {
+  iAPlay: function () {
     Master.disableButton();
     Master.displayMessage("Tour IA");
 
@@ -78,43 +87,55 @@ var Master = {
     //Méthode ALEATOIRE
     if ($('#algo').val() == 0) {
       var nombreAleatoire = Math.floor(Math.random() * (aColonneJouable.length - 0));
-      Master.addToken(aColonneJouable[nombreAleatoire],IA_PLAYER);
+      Master.addToken(aColonneJouable[nombreAleatoire], IA_PLAYER);
     }
+
     Master.refreshButton();
     Master.humanPlay();
   },
   humanPlay: function () {
     //On désactive les boutons des colonnes pleines
-    for(var i = 1; i <= 7; i++){
-      if(Master.isFullColumn(i)){
-        console.log('#button'+i);
-        $('#button'+i).attr('disabled', 'disabled');
+    for (var i = 1; i <= 7; i++) {
+      if (Master.isFullColumn(i)) {
+        $('#button' + i).attr('disabled', 'disabled');
       }
     }
     Master.displayMessage("Tour Humain");
   },
-  getColumnPlay: function (){
+  getColumnPlay: function () {
     var aTable = new Array;
-    for(var i = 1; i <= 7; i++){
-      if(!Master.isFullColumn(i)){
+    for (var i = 1; i <= 7; i++) {
+      if (!Master.isFullColumn(i)) {
         aTable.push(i);
       }
     }
     return aTable;
   },
+  getCasePlay: function (column_number) {
+    $('.column_' + column_number).toArray().reverse().every(function (element) {
+      // probleme foreach ou every, le foreach ne s'arrete pas meme avec le return ???
+      if ($(element).has('div').length == 0) {
+        return $(element).attr('class').substr(-1);
+      }
+    });
+
+    return false;
+  },
   //On check si on finit on plaçant un pion au coord (x,y)
-  checkEnd: function (x,y,type) {
+  checkEnd: function (x, y, type) {
     var toCheck = 'ia_token';
-    if(type==HUMAN_PLAYER){
+    if (type == HUMAN_PLAYER) {
       toCheck = 'human_token';
     }
 
     var cpt = 0;
     //On check horizontalement
-    $('#row-'+x+ ' td').each(function(){
-      if($(this).children().length>0){
+    $('#row-' + x + ' td').each(function () {
+      if ($(this).children().length > 0) {
         cpt++;
-        if(cpt == 4){return true;}
+        if (cpt == 4) {
+          return true;
+        }
       }
     });
     return false;
@@ -128,7 +149,7 @@ var Master = {
     //On désactive les boutons de base
     $('#puissance4-actionRow button').attr('disabled', 'disabled');
   },
-  refreshButton: function(){
+  refreshButton: function () {
     //On active les boutons de base
     $('#puissance4-actionRow button').removeAttr('disabled');
   },
@@ -136,6 +157,7 @@ var Master = {
     return $('#row-1 .column_' + column_number + ' div').length ? true : false;
   }
 }
+
 $(document).ready(function () {
   Master.init();
 });
