@@ -3,20 +3,11 @@ const IA_PLAYER = 1;
 const IA_PLAYER2 = 2;
 
 var arbre;
+var historique;
 
 var Master = {
   init: function () {
     console.log('Initialisation');
-    // @todo leo
-//    var myNode = new Node(1, 1);
-//    Master.getColumnPlay().forEach(function (case_y) {
-//      if (case_y == this.y) {
-//        case_y++;
-//      }
-//      console.log(Master.getCasePlay(case_y));
-//      //myNode.children.push(new Node(this.getCasePlay(case_y), case_y));
-//    });
-//    myNode.toString();
 
     // checker la diffultée
     $('#button-start').click(function () {
@@ -28,7 +19,7 @@ var Master = {
       var coord = Master.addToken($(this).data('col'), HUMAN_PLAYER);
       if (Master.checkEnd(coord['x'], coord['y'], HUMAN_PLAYER)) {
         Master.displayMessage("Vainqueur : Humain");
-        Master.disableButton();
+		Master.endGame();
       }
       else {
         Master.evalBranche(IA_PLAYER);
@@ -36,7 +27,28 @@ var Master = {
       }
     });
   },
+  endGame: function (type) {
+	  Master.disableButton();
+	  renderHistorique(historique);
+	  //Si on joue IA vs IA on enregistre
+	  if(type != 'undefined' && $('#typeJoueur2').val()==1){
+		  //saveResult();
+		  var algo1 = $('#algo1').val();
+		  var algo2 = $('#algo2').val();
+		  var sAlgo1 = $('#algo1 option:selected').text();
+		  var sAlgo2 = $('#algo2 option:selected').text();
+		  var prevision1 = $('#nbCoup1').val();
+		  var prevision2 = $('#nbCoup2').val();
+		  
+		  var file = sAlgo1+'-'+prevision1+'___'+sAlgo2+'-'+prevision2;
+		  console.log(file);
+	  }
+  },
   startGame: function () {
+	//on initialise l'historique
+	$('#historique').html("");
+	historique = new Historique();
+	
     //On initialise l'arbre
     var aFils = Master.creerFils();
     arbre = new Arbre(aFils);
@@ -112,6 +124,9 @@ var Master = {
     else {
       alert('AddToken  : player_type inconnu');
     }
+	//Maj historique
+	addCoupHistorique(historique,aResult['y'],aResult['x'],player_type);
+	
     //DEBUT on recrée les branches
     arbre = new Arbre(Master.creerFils());
     //FIN
@@ -148,7 +163,7 @@ var Master = {
     //WIN
     if (Master.checkEnd(coord['x'], coord['y'], TYPE_IA)) {
       Master.displayMessage("Vainqueur : IA " + TYPE_IA);
-      Master.disableButton();
+	  Master.endGame(TYPE_IA);
     }
     //On continue
     else {

@@ -5,6 +5,8 @@
   <link rel="stylesheet" type="text/css" href="css/main.css">
   <script type="text/javascript" src="js/jquery-3.0.min.js"></script>
   <script type="text/javascript" src="js/arbre.js"></script>
+  <script type="text/javascript" src="js/historique.js"></script>
+  <script type="text/javascript" src="js/coup.js"></script>
   <script type="text/javascript" src="js/puissance4.js"></script>
   <title>Puissance 4</title>
 </head>
@@ -20,11 +22,13 @@
 			<br>Heuristique
 			<select id="algo1">
 				<option value="0">Aléatoire</option>
-				<option value="1">Max</option>
-				<option value="2">Max avec Contre</option>
+				<option value="1">Basique</option>
+				<option value="2">Basique avec Contre</option>
 			</select>
 			<br>Algorithme
 			<select id="algorithme1">
+				<option value="0">Min max</option>
+				<option value="1">Alpha Beta</option>
 			</select>
 			<br>Prevision sur X coups
 			<select id="nbCoup1">
@@ -42,14 +46,16 @@
 			<br>Heuristique
 			<select id="algo2">
 				<option value="0">Aléatoire</option>
-				<option value="1">Max</option>
-				<option value="2">Max avec Contre</option>
+				<option value="1">Basique</option>
+				<option value="2">Basique avec Contre</option>
 			</select>
 			<br>Algorithme
-			<select id="algorithme1">
+			<select id="algorithme2">
+				<option value="0">Min max</option>
+				<option value="1">Alpha Beta</option>
 			</select>
 			<br>Prevision sur X coups
-			<select id="nbCoup1">
+			<select id="nbCoup2">
 				<option value="0">0</option>
 			</select>
 		</div>
@@ -166,5 +172,7 @@
 	  </tr>
 	  </tbody>
 	</table>
+	
+	<div id="historique"></div>
 </body>
 </html>
