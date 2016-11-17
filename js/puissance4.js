@@ -126,32 +126,25 @@ var Master = {
     //Tableau de colonne jouable
     aColonneJouable = Master.getColumnPlay();
 
-    //Méthode ALEATOIRE
-    if ($('#algo' + TYPE_IA).val() == 0) {
-      var nombreAleatoire = Math.floor(Math.random() * (aColonneJouable.length - 0));
-      coord = Master.addToken(aColonneJouable[nombreAleatoire], TYPE_IA);
-    }
-    //Méthode Max
-    else if ($('#algo' + TYPE_IA).val() == 1) {
-      //On parcours les fils de la branche en cours
-      var colMax = null;
-      var arrayMax = new Array;
-      for (i = 0; i < arbre.fils.length; i++) {
-        //console.log(arbre.fils[i]);
-        if (colMax == null || arbre.fils[i].valeur > colMax) {
-          colMax = arbre.fils[i].valeur;
-          arrayMax = new Array;
-          arrayMax[0] = arbre.fils[i].colonne;
+	//On parcours les fils de la branche en cours
+	var colMax = null;
+	var arrayMax = new Array;
+	for (i = 0; i < arbre.fils.length; i++) {
+	//console.log(arbre.fils[i]);
+	if (colMax == null || arbre.fils[i].valeur > colMax) {
+	  colMax = arbre.fils[i].valeur;
+	  arrayMax = new Array;
+	  arrayMax[0] = arbre.fils[i].colonne;
 
-        }
-        else if (colMax == arbre.fils[i].valeur) {
-          arrayMax[arrayMax.length] = arbre.fils[i].colonne;
-        }
-      }
-      //SI plusieurs possibilité ont les même valeurs on choisi aléatoirement
-      var nombreAleatoire = Math.floor(Math.random() * (arrayMax.length - 0));
-      coord = Master.addToken(arrayMax[nombreAleatoire], TYPE_IA);
-    }
+	}
+	else if (colMax == arbre.fils[i].valeur) {
+	  arrayMax[arrayMax.length] = arbre.fils[i].colonne;
+	}
+	}
+	//SI plusieurs possibilité ont les même valeurs on choisi aléatoirement
+	var nombreAleatoire = Math.floor(Math.random() * (arrayMax.length - 0));
+	coord = Master.addToken(arrayMax[nombreAleatoire], TYPE_IA);
+    
     //WIN
     if (Master.checkEnd(coord['x'], coord['y'], TYPE_IA)) {
       Master.displayMessage("Vainqueur : IA " + TYPE_IA);

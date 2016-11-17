@@ -19,3 +19,12 @@ table td {
 .ia_token{
 	background-color:yellow;
 }
+.caseJoueur{
+	position:relative;
+	float:left;
+	width:40%;
+	margin-right:2%;
+	border:1px solid black;
+	padding:10px;
+	margin-bottom:10px;
+}
