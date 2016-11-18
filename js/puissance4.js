@@ -2,8 +2,10 @@ const HUMAN_PLAYER = 0;
 const IA_PLAYER = 1;
 const IA_PLAYER2 = 2;
 
-var arbre;
+
 var historique;
+var arbre = [];
+var level_prediction = 1;
 
 var Master = {
   init: function () {
@@ -22,7 +24,6 @@ var Master = {
 		Master.endGame();
       }
       else {
-        Master.evalBranche(IA_PLAYER);
         Master.iAPlay(IA_PLAYER);
       }
     });
@@ -49,17 +50,15 @@ var Master = {
 	$('#historique').html("");
 	historique = new Historique();
 	
-    //On initialise l'arbre
-    var aFils = Master.creerFils();
-    arbre = new Arbre(aFils);
     $('.token').remove();
     Master.refreshButton();
     Master.displayMessage("Début de la partie");
 
+    level_prediction = $('#nbCoup1').val();
+
     var random = (Math.floor((Math.random() * 10) + 1) <= 5);
     if (random) {
       if ($('#typeJoueur2').val() == 1) {
-        Master.evalBranche(IA_PLAYER2);
         Master.iAPlay(IA_PLAYER2);
       }
       else {
@@ -67,7 +66,6 @@ var Master = {
       }
     }
     else {
-      Master.evalBranche(IA_PLAYER);
       Master.iAPlay(IA_PLAYER);
     }
   },
@@ -127,8 +125,6 @@ var Master = {
 	//Maj historique
 	addCoupHistorique(historique,aResult['y'],aResult['x'],player_type);
 	
-    //DEBUT on recrée les branches
-    arbre = new Arbre(Master.creerFils());
     //FIN
     return aResult;
   },
@@ -136,30 +132,27 @@ var Master = {
     Master.disableButton();
     Master.displayMessage("Tour IA " + TYPE_IA);
 
-    var listButton = $('#puissance4-actionRow button');
+    arbre = new Arbre(Master.creerArbre());
 
-    //Tableau de colonne jouable
-    aColonneJouable = Master.getColumnPlay();
+    //On parcours les fils de la branche en cours
+    var colMax = null;
+    var arrayMax = new Array;
+    for (i = 0; i < arbre.fils.length; i++) {
+      //console.log(arbre.fils[i]);
+      if (colMax == null || arbre.fils[i].valeur > colMax) {
+        colMax = arbre.fils[i].valeur;
+        arrayMax = new Array;
+        arrayMax[0] = arbre.fils[i].colonne;
 
-	//On parcours les fils de la branche en cours
-	var colMax = null;
-	var arrayMax = new Array;
-	for (i = 0; i < arbre.fils.length; i++) {
-	//console.log(arbre.fils[i]);
-	if (colMax == null || arbre.fils[i].valeur > colMax) {
-	  colMax = arbre.fils[i].valeur;
-	  arrayMax = new Array;
-	  arrayMax[0] = arbre.fils[i].colonne;
+      }
+      else if (colMax == arbre.fils[i].valeur) {
+        arrayMax[arrayMax.length] = arbre.fils[i].colonne;
+      }
+    }
+    //SI plusieurs possibilité ont les même valeurs on choisi aléatoirement
+    var nombreAleatoire = Math.floor(Math.random() * (arrayMax.length - 0));
+    coord = Master.addToken(arrayMax[nombreAleatoire], TYPE_IA);
 
-	}
-	else if (colMax == arbre.fils[i].valeur) {
-	  arrayMax[arrayMax.length] = arbre.fils[i].colonne;
-	}
-	}
-	//SI plusieurs possibilité ont les même valeurs on choisi aléatoirement
-	var nombreAleatoire = Math.floor(Math.random() * (arrayMax.length - 0));
-	coord = Master.addToken(arrayMax[nombreAleatoire], TYPE_IA);
-    
     //WIN
     if (Master.checkEnd(coord['x'], coord['y'], TYPE_IA)) {
       Master.displayMessage("Vainqueur : IA " + TYPE_IA);
@@ -173,11 +166,9 @@ var Master = {
       }
       else {
         if (TYPE_IA == 1) {
-          Master.evalBranche(IA_PLAYER2);
           Master.iAPlay(IA_PLAYER2);
         }
         else {
-          Master.evalBranche(IA_PLAYER);
           Master.iAPlay(IA_PLAYER);
         }
 
@@ -193,10 +184,10 @@ var Master = {
     }
     Master.displayMessage("Tour Humain");
   },
-  getColumnPlay: function () {
-    var aTable = new Array;
+  getColumnPlay: function (virtual_token) {
+    var aTable = [];
     for (var i = 1; i <= 7; i++) {
-      if (!Master.isFullColumn(i)) {
+      if (!Master.isFullColumn(i, virtual_token)) {
         aTable.push(i);
       }
     }
@@ -341,28 +332,60 @@ var Master = {
     //On active les boutons de base
     $('#puissance4-actionRow button').removeAttr('disabled');
   },
-  isFullColumn: function (column_number) {
-    return $('#row-1 .column_' + column_number + ' div').length ? true : false;
-  },
-  creerFils: function () {
-    var aColonneJouable = Master.getColumnPlay();
-    var aFils = new Array;
-    for (i = 0; i < aColonneJouable.length; i++) {
-      var colonne = aColonneJouable[i];
-      var value = 1;
-      var noeudTmp = new Noeud(colonne, value, new Array);
-      aFils.push(noeudTmp);
+  isFullColumn: function (column_number, virtual_token) {
+    var case_to_test = 1;
+    if (typeof virtual_token !== 'undefined') {
+      if (virtual_token.indexOf(column_number) >= 0) { //@todo remplacer if par while et corriger le tableau virtual token
+        case_to_test += 1;
+      }
     }
+
+    return $('#row-' + case_to_test + ' .column_' + column_number + ' div').length ? true : false;
+  },
+  creerArbre: function () {
+    var aFils = [];
+    Master.getColumnPlay().forEach(function (colonne) {
+      if (level_prediction > 1) {
+        var node = Master.createNode(colonne, 1);
+      }
+      else {
+        var node = new Feuille(colonne, 1); //@todo remplacer par la fonction d'eval
+      }
+
+      aFils.push(node);
+    });
+
     return aFils;
+  },
+  createNode: function (colonne, current_level_prediction, virtual_token) {
+    var virtual_token = (typeof virtual_token !== 'undefined') ? virtual_token : [];
+    var node = new Noeud(colonne);
+    var aFils = [];
+
+    virtual_token.push(colonne);
+
+    if (current_level_prediction == level_prediction) {
+      console.log(virtual_token);
+      Master.getColumnPlay(virtual_token).forEach(function (colonne) {
+        aFils.push(new Feuille(colonne, 1)); // 1 valeur de la feuille @todo remplacer par la fonction d'eval
+      });
+    }
+    else {
+      Master.getColumnPlay(virtual_token).forEach(function (colonne) {
+        var tmp_current_level = current_level_prediction;
+        aFils.push(Master.createNode(colonne, ++tmp_current_level, virtual_token));
+      });
+    }
+
+    node.setFils(aFils);
+
+    return node;
   },
   // Donne un nombre de point à la branche en fonction de son potentiel
   // Algo 1 : donne des points en fonction du nombre de doublet/triplet que va former le nouveau jeton (dans tous les sens)
   // Algo 2 : donner un grand nombre de point pour contrer adversaire ayant un triplet
-  evalBranche: function (type) {
+  evalFeuille: function (type) {
     var typeToken = 'ia_token';
-    if (type == HUMAN_PLAYER) {
-      typeToken = 'human_token';
-    }
     if (type == IA_PLAYER2) {
       typeToken = 'ia_token2';
     }
@@ -485,6 +508,7 @@ var Master = {
     }
   }
 }
+
 $(document).ready(function () {
   Master.init();
 });
