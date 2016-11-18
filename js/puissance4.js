@@ -107,12 +107,14 @@ var Master = {
     Master.displayMessage("Tour IA " + TYPE_IA);
 
     arbre = new Arbre(Master.creerArbre());
+    console.log(JSON.stringify(arbre, null, '\t'));
+    return;
 
-    //On parcours les fils de la branche en cours
+    // on implémente le min max
+
     var colMax = null;
     var arrayMax = new Array;
     for (i = 0; i < arbre.fils.length; i++) {
-      //console.log(arbre.fils[i]);
       if (colMax == null || arbre.fils[i].valeur > colMax) {
         colMax = arbre.fils[i].valeur;
         arrayMax = new Array;
@@ -167,7 +169,7 @@ var Master = {
     }
     return aTable;
   },
-  //On check si on finit on plaçant un pion au coord (x,y)
+  //On check si on finit en plaçant un pion au coord (x,y)
   checkEnd: function (x, y, type, forcePrevision) {
     if (forcePrevision == 'undefined') {
       forcePrevision = false;
@@ -309,9 +311,11 @@ var Master = {
   isFullColumn: function (column_number, virtual_token) {
     var case_to_test = 1;
     if (typeof virtual_token !== 'undefined') {
-      if (virtual_token.indexOf(column_number) >= 0) { //@todo remplacer if par while et corriger le tableau virtual token
-        case_to_test += 1;
-      }
+      virtual_token.forEach(function (colonne) {
+        if (colonne == column_number) {
+          case_to_test += 1;
+        }
+      });
     }
 
     return $('#row-' + case_to_test + ' .column_' + column_number + ' div').length ? true : false;
@@ -323,7 +327,7 @@ var Master = {
         var node = Master.createNode(colonne, 1);
       }
       else {
-        var node = new Feuille(colonne, 1); //@todo remplacer par la fonction d'eval
+        var node = new Feuille(colonne, Master.evalFeuille());
       }
 
       aFils.push(node);
@@ -339,9 +343,8 @@ var Master = {
     virtual_token.push(colonne);
 
     if (current_level_prediction == level_prediction) {
-      console.log(virtual_token);
       Master.getColumnPlay(virtual_token).forEach(function (colonne) {
-        aFils.push(new Feuille(colonne, 1)); // 1 valeur de la feuille @todo remplacer par la fonction d'eval
+        aFils.push(new Feuille(colonne, Master.evalFeuille()));
       });
     }
     else {
@@ -351,7 +354,18 @@ var Master = {
       });
     }
 
+    var aValeurs = aFils.map(function (a) {
+      return a.valeur;
+    });
+    if (current_level_prediction % 2 == 0) {
+      node.setValeur(Math.min.apply(null, aValeurs));
+    }
+    else {
+      node.setValeur(Math.max.apply(null, aValeurs));
+    }
+
     node.setFils(aFils);
+    virtual_token.pop();
 
     return node;
   },
@@ -359,6 +373,8 @@ var Master = {
   // Algo 1 : donne des points en fonction du nombre de doublet/triplet que va former le nouveau jeton (dans tous les sens)
   // Algo 2 : donner un grand nombre de point pour contrer adversaire ayant un triplet
   evalFeuille: function (type) {
+    return Math.floor((Math.random() * 7) + 1);
+
     var typeToken = 'ia_token';
     if (type == IA_PLAYER2) {
       typeToken = 'ia_token2';
