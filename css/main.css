@@ -51,3 +51,7 @@ table td {
 #historique .last{
 	background-color:green;
 }
+canvas{
+	width: 100% !important;
+	height: auto !important;
+}

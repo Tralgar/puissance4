@@ -14,7 +14,7 @@ function addCoupHistorique(historique,x,y,player){
 
 function renderHistorique(historique){
 	historique.aTable.reverse();
-	var html = "<div>Nombre coups joués : " + historique.aTable.length + "</div>";
+	var html = "";
 	
 	for(var i = 0; i<historique.aTable.length; i++){
 		var html = html + "<div class='tableHistorique'>";

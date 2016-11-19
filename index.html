@@ -7,7 +7,9 @@
   <script type="text/javascript" src="js/arbre.js"></script>
   <script type="text/javascript" src="js/historique.js"></script>
   <script type="text/javascript" src="js/coup.js"></script>
+  <script type="text/javascript" src="js/sauvegarde.js"></script>
   <script type="text/javascript" src="js/puissance4.js"></script>
+  <script src="js/chart.js"></script>
   <title>Puissance 4</title>
 </head>
 <body>
@@ -15,7 +17,8 @@
 	<div id="message"></div>
 	<div>
 		<div class="caseJoueur">
-			Joueur 1 :
+			Nombre de victoire(s) : <span id='nbVictoire1'>0</span>/<span class='nbPartie'>0</span>
+			<br>Joueur 1 : 
 			<select style="width:75px" disabled id="typeJoueur1">
 				<option value="1">IA</option>
 			</select>
@@ -42,7 +45,8 @@
 		</div>
 		
 		<div class="caseJoueur">
-			Joueur 2 : 
+			Nombre de victoire(s) : <span id='nbVictoire2'>0</span>/<span class='nbPartie'>0</span>
+			<br>Joueur 2 : 
 			<select style="width:75px" id="typeJoueur2">
 				<option value="0">Humain</option>
 				<option value="1" selected>IA</option>
@@ -64,7 +68,24 @@
 			</select>
 		</div>
 	</div>
+	
 	<button id="button-start" value="Start Game">Start game</button>
+	<br>
+	<br>
+	Nombre de parties : <input type="text" id="nbPartie" value="1" size="4" name="nbPartie">
+
+	<div class="caseJoueur">
+		<ul>
+			<li>Temps d'execution de la partie : <span id='tempsPartie'></span></li>
+			<li>Nombre coups de la partie : <span id='nbCoupPartie'></span></li>
+			<br>
+			<li>Temps d'éxécution moyen de la session : <span id='tempsSession'></span></li>
+			<li>Nombre de coups moyen de la session : <span id='nbCoupSession'></span></li>
+		</ul>
+		<canvas id="myChart" width="300" height="80"></canvas>
+		<canvas id="myChart2" width="300" height="80"></canvas>
+	</div>
+	
 	<table class="puissance4">
 	  <thead>
 	  <tr id="puissance4-actionRow">

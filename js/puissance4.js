@@ -2,6 +2,20 @@ const HUMAN_PLAYER = 0;
 const IA_PLAYER = 1;
 const IA_PLAYER2 = 2;
 
+var nbPartie = 0;
+var nbCoup = 0;
+var tempsPartie = 0;
+
+var nbPartieSession = 0;
+var nbCoupSession = 0;
+var tempsSession = 0;
+
+var tabTempsCoup = new Array();
+var tabNbCoup = new Array();
+var tabPartie = new Array();
+
+var nbWin1 = 0;
+var nbWin2 = 0;
 
 var historique;
 var arbre = [];
@@ -29,23 +43,59 @@ var Master = {
     });
   },
   endGame: function (type) {
+	  tempsPartie = Math.round(new Date().getTime()) - tempsPartie;
+	  
 	  Master.disableButton();
 	  renderHistorique(historique);
-	  //Si on joue IA vs IA on enregistre
-	  if(type != 'undefined' && $('#typeJoueur2').val()==1){
-		  //saveResult();
-		  var algo1 = $('#algo1').val();
-		  var algo2 = $('#algo2').val();
-		  var sAlgo1 = $('#algo1 option:selected').text();
-		  var sAlgo2 = $('#algo2 option:selected').text();
-		  var prevision1 = $('#nbCoup1').val();
-		  var prevision2 = $('#nbCoup2').val();
-		  
-		  var file = sAlgo1+'-'+prevision1+'___'+sAlgo2+'-'+prevision2;
-		  console.log(file);
+	  
+	  //Nombre de partie et nombre partie gagants
+	  nbPartie++;
+	  if(type==2){nbWin2++}
+	  else{nbWin1++;}
+	  $('.nbPartie').html(nbPartie);
+	  $('#nbVictoire1').html(nbWin1);
+	  $('#nbVictoire2').html(nbWin2);
+	  
+	  //Nombre de coups joués
+	  nbCoupSession = nbCoupSession + nbCoup;
+	  nbCoupSessionMoyen = nbCoupSession / nbPartie;
+	  $('#nbCoupPartie').html(nbCoup);
+	  $('#nbCoupSession').html(nbCoupSessionMoyen);
+	  
+	  //Temps d'exection
+	  tempsSession = tempsSession + tempsPartie;
+	  tempsSessionMoyen = tempsSession / nbPartie;
+	  if(tempsSessionMoyen<1000){tempsSessionMoyen = tempsSessionMoyen + ' ms';}
+	  else{tempsSessionMoyen = tempsSessionMoyen/1000 + 's';}
+	  $('#tempsPartie').html(tempsPartie + ' ms');
+	  $('#tempsSession').html(tempsSessionMoyen);
+	  
+	  
+	  //Création des charts
+	  tabPartie.push(nbPartie);
+	  
+	  //Création chart temp
+	  tabTempsCoup.push(tempsPartie);
+	  Master.creerGraph("#myChart",tabPartie,tabTempsCoup,"Temps d'éxécution par partie");
+	  
+	  //Création chart nbCoups
+	  tabNbCoup.push(nbCoup);
+	  Master.creerGraph("#myChart2",tabPartie,tabNbCoup,"Nombre de coups par partie");
+	  
+	  nbPartieSession++;
+	  //On a fini la session
+	  if(nbPartieSession == $("#nbPartie").val()){
+		  nbPartieSession = 0;
+	  }
+	  //on continue
+	  else{
+		  Master.startGame();
 	  }
   },
   startGame: function () {
+	nbCoup = 0;
+	tempsPartie = Math.round(new Date().getTime());
+	
 	//on initialise l'historique
 	$('#historique').html("");
 	historique = new Historique();
@@ -88,7 +138,9 @@ var Master = {
     return aResult;
   },
   addToken: function (column_number, player_type) {
-    var aResult = Array;
+    nbCoup++;
+	
+	var aResult = Array;
     aResult['y'] = column_number;
     if (player_type == HUMAN_PLAYER || player_type == IA_PLAYER2) {
       end = false;
@@ -365,7 +417,7 @@ var Master = {
     virtual_token.push(colonne);
 
     if (current_level_prediction == level_prediction) {
-      console.log(virtual_token);
+      //console.log(virtual_token);
       Master.getColumnPlay(virtual_token).forEach(function (colonne) {
         aFils.push(new Feuille(colonne, 1)); // 1 valeur de la feuille @todo remplacer par la fonction d'eval
       });
@@ -506,6 +558,40 @@ var Master = {
         arbre.fils[i].ptsContre = 100;
       }
     }
+  },
+  creerGraph: function(selector,labelsParam,dataParam,labelParam){
+	var ctx = $(selector);
+	var data = {
+		labels: labelsParam,
+		datasets: [
+			{
+				label: labelParam,
+				fill: false,
+				lineTension: 0.1,
+				backgroundColor: "rgba(75,192,192,0.4)",
+				borderColor: "rgba(75,192,192,1)",
+				borderCapStyle: 'butt',
+				borderDash: [],
+				borderDashOffset: 0.0,
+				borderJoinStyle: 'miter',
+				pointBorderColor: "rgba(75,192,192,1)",
+				pointBackgroundColor: "#fff",
+				pointBorderWidth: 1,
+				pointHoverRadius: 5,
+				pointHoverBackgroundColor: "rgba(75,192,192,1)",
+				pointHoverBorderColor: "rgba(220,220,220,1)",
+				pointHoverBorderWidth: 2,
+				pointRadius: 1,
+				pointHitRadius: 10,
+				data: dataParam,
+				spanGaps: false,
+			}
+		]
+	};
+	var myLineChart = new Chart(ctx, {
+		type: 'line',
+		data: data
+	});
   }
 }
 
