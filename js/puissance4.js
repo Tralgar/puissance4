@@ -2,27 +2,29 @@ const HUMAN_PLAYER = 0;
 const IA_PLAYER = 1;
 const IA_PLAYER2 = 2;
 
-var arbre = [];
 var level_prediction = 1;
+var current_player = null;
+var enemy_player = null;
+
+var token_in_game = [];
 
 var Master = {
   init: function () {
-    console.log('Initialisation');
-
-    // checker la diffultée
     $('#button-start').click(function () {
       Master.startGame();
     });
 
-    //L'humain clique sur le bouton, ajoute son pion et redonne la main à l'IA
     $('#puissance4-actionRow th button').click(function () {
-      var coord = Master.addToken($(this).data('col'), HUMAN_PLAYER);
-      if (Master.checkEnd(coord['x'], coord['y'], HUMAN_PLAYER)) {
+      current_player = HUMAN_PLAYER;
+      var coord = Master.addToken($(this).data('col'));
+
+      if (Master.checkEnd(coord)) {
         Master.displayMessage("Vainqueur : Humain");
         Master.disableButton();
       }
       else {
-        Master.iAPlay(IA_PLAYER);
+        current_player = IA_PLAYER;
+        Master.iAPlay();
       }
     });
   },
@@ -33,126 +35,94 @@ var Master = {
 
     level_prediction = $('#nbCoup1').val();
 
-    var random = (Math.floor((Math.random() * 10) + 1) <= 5);
+    var random = (Math.floor((Math.random() * 2) + 1) == 1);
     if (random) {
-      if ($('#typeJoueur2').val() == 1) {
-        Master.iAPlay(IA_PLAYER2);
+      current_player = $('#typeJoueur2').val();
+      enemy_player = IA_PLAYER;
+
+      if (current_player == IA_PLAYER2) {
+        Master.iAPlay();
       }
       else {
+        current_player = HUMAN_PLAYER;
         Master.humanPlay();
       }
     }
     else {
-      Master.iAPlay(IA_PLAYER);
+      current_player = IA_PLAYER;
+      enemy_player = $('#typeJoueur2').val();
+      Master.iAPlay();
     }
   },
-  //Renvoie les coodonnée X/Y de la prochaine case à jouer d'une colonne
-  getCoordJetonByColumn: function (column_number) {
-    var aResult = new Array;
-    aResult['y'] = column_number;
-    end = false;
+  setPlayers: function () {
+    var tmp_player = current_player;
+    current_player = enemy_player;
+    enemy_player = tmp_player;
+  },
+  getCoordTokenByColumn: function (column_number, virtual_token) {
+    // @todo axe d'amélioration par ex ID et pas de foreach etc...
+    var y = 0;
     $('.column_' + column_number).toArray().reverse().forEach(function (element) {
       if ($(element).has('div').length == 0) {
-        if (!end) {
-          aResult['x'] = $(element).parent().data('ligne');
-          end = true;
-        }
+        y = $(element).parent().data('ligne');
       }
     });
-    if (aResult['x'] <= 0) {
-      return false;
-    }
-    return aResult;
-  },
-  addToken: function (column_number, player_type) {
-    var aResult = Array;
-    aResult['y'] = column_number;
-    if (player_type == HUMAN_PLAYER || player_type == IA_PLAYER2) {
-      end = false;
-      $('.column_' + column_number).toArray().reverse().forEach(function (element) {
-        if ($(element).has('div').length == 0) {
-          if (!end) {
-            if (player_type == HUMAN_PLAYER) {
-              $(element).append('<div class="token human_token"></div>');
-            }
-            else {
-              $(element).append('<div class="token ia_token2"></div>');
-            }
-            aResult['x'] = $(element).parent().data('ligne');
-            end = true;
-          }
+
+    if (typeof virtual_token !== 'undefined') {
+      virtual_token.forEach(function (colonne) {
+        if (colonne == column_number) {
+          y -= 1;
         }
       });
-    }
-    else if (player_type == IA_PLAYER) {
-      end = false;
-      $('.column_' + column_number).toArray().reverse().forEach(function (element) {
-        if ($(element).has('div').length == 0) {
-          if (!end) {
-            $(element).append('<div class="token ia_token"></div>');
-            aResult['x'] = $(element).parent().data('ligne');
-            end = true;
-          }
-        }
-      });
-    }
-    else {
-      alert('AddToken  : player_type inconnu');
     }
 
-    return aResult;
+    return (y < 1) ? false : new Coord(column_number, y);
   },
-  iAPlay: function (TYPE_IA) {
+  addToken: function (column_number) {
+    var coord = new Coord(null, column_number);
+
+    $('.column_' + column_number).toArray().reverse().some(function (element) {
+      if ($(element).has('div').length == 0) {
+        $(element).append('<div class="token" data-player="' + current_player + '"></div>');
+        coord.x = $(element).parent().data('ligne');
+        return coord;
+      }
+    });
+
+    return false;
+  },
+  iAPlay: function () {
     Master.disableButton();
-    Master.displayMessage("Tour IA " + TYPE_IA);
+    Master.displayMessage("Tour IA " + current_player);
 
-    arbre = new Arbre(Master.creerArbre());
-    console.log(JSON.stringify(arbre, null, '\t'));
-    return;
+    token_in_game[current_player] = [];
+    token_in_game[enemy_player] = [];
+    $('div[data-player]').each(function () {
+      var parent = $(this).parent();
+      token_in_game[$(this).attr('data-player')].push(new Coord(parent.attr('data-col'), parent.attr('data-row')));
+    });
 
-    // on implémente le min max
-
-    var colMax = null;
-    var arrayMax = new Array;
-    for (i = 0; i < arbre.fils.length; i++) {
-      if (colMax == null || arbre.fils[i].valeur > colMax) {
-        colMax = arbre.fils[i].valeur;
-        arrayMax = new Array;
-        arrayMax[0] = arbre.fils[i].colonne;
-
-      }
-      else if (colMax == arbre.fils[i].valeur) {
-        arrayMax[arrayMax.length] = arbre.fils[i].colonne;
-      }
-    }
-    //SI plusieurs possibilité ont les même valeurs on choisi aléatoirement
-    var nombreAleatoire = Math.floor(Math.random() * (arrayMax.length - 0));
-    coord = Master.addToken(arrayMax[nombreAleatoire], TYPE_IA);
+    var arbre = new Arbre(Master.creerArbre());
+    var coord = Master.addToken(arbre.getMax());
 
     //WIN
-    if (Master.checkEnd(coord['x'], coord['y'], TYPE_IA)) {
-      Master.displayMessage("Vainqueur : IA " + TYPE_IA);
+    if (Master.checkEnd(coord)) {
+      Master.displayMessage("Vainqueur : IA " + current_player);
       Master.disableButton();
     }
-    //On continue
     else {
       Master.refreshButton();
-      if ($("#typeJoueur2").val() == 0) {
+      if (enemy_player == HUMAN_PLAYER) {
+        Master.setPlayers();
         Master.humanPlay();
       }
       else {
-        if (TYPE_IA == 1) {
-          Master.iAPlay(IA_PLAYER2);
-        }
-        else {
-          Master.iAPlay(IA_PLAYER);
-        }
-
+        Master.setPlayers();
+        Master.iAPlay();
       }
     }
   },
   humanPlay: function () {
-    //On désactive les boutons des colonnes pleines
     for (var i = 1; i <= 7; i++) {
       if (Master.isFullColumn(i)) {
         $('#button' + i).attr('disabled', 'disabled');
@@ -169,24 +139,18 @@ var Master = {
     }
     return aTable;
   },
-  //On check si on finit en plaçant un pion au coord (x,y)
-  checkEnd: function (x, y, type, forcePrevision) {
+  checkEnd: function (coord, forcePrevision) {
+    // @todo enlever tocheck et ajouter data-player
     if (forcePrevision == 'undefined') {
       forcePrevision = false;
     }
-    var toCheck = 'ia_token';
-    if (type == HUMAN_PLAYER) {
-      toCheck = 'human_token';
-    }
-    if (type == IA_PLAYER2) {
-      toCheck = 'ia_token2';
-    }
 
+    // @todo essayer de ne pas mettre de pion physique mais ajouter au tableau
     //Ajout d'un jeton invisible sur la case de prevision
     if (forcePrevision) {
-      var elem = $(".puissance4_column[data-col='" + (y) + "'][data-row='" + (x) + "']");
+      var elem = $(".puissance4_column[data-col='" + coord.y + "'][data-row='" + coord.x + "']");
       if (elem.length > 0) {
-        elem.append('<div style="display:none" class="invisibleToDelete ' + toCheck + '"></div>');
+        elem.append('<div class="invisibleToDelete" data-player="' + current_player + '"></div>');
       }
     }
 
@@ -194,7 +158,8 @@ var Master = {
     var cpt = 0;
     //On check horizontalement
     for (var i = 1; i <= 7; i++) {
-      elem = $('#row-' + x + ' .column_' + i);
+      elem = $('#row-' + coord.x + ' .column_' + i);
+      // @todo mettre un find
       if (elem.children().length > 0) {
         token = elem.children();
         if (token.hasClass(toCheck)) {
@@ -215,7 +180,7 @@ var Master = {
     //On check verticalement
     var cpt = 0;
     for (var i = 1; i <= 7; i++) {
-      elem = $('#row-' + i + ' .column_' + y);
+      elem = $('#row-' + i + ' .column_' + coord.y);
       if (elem.children().length > 0) {
         token = elem.children();
         if (token.hasClass(toCheck)) {
@@ -235,7 +200,7 @@ var Master = {
 
     //On check diagonale 1
     var cpt = 0;
-    var start = x - (y - 1);
+    var start = coord.x - (coord.y - 1);
     if (start < 0) {
       start = 0;
     }
@@ -263,7 +228,7 @@ var Master = {
     //On check diagonale 2
     var cpt = 0;
     var startY = 7;
-    var startX = y - (7 - x);
+    var startX = coord.y - (7 - coord.x);
     var j = startX;
     if (startY < 0) {
       startY = 0;
@@ -344,7 +309,7 @@ var Master = {
 
     if (current_level_prediction == level_prediction) {
       Master.getColumnPlay(virtual_token).forEach(function (colonne) {
-        aFils.push(new Feuille(colonne, Master.evalFeuille()));
+        aFils.push(new Feuille(colonne, Master.evalFeuille(colonne, virtual_token)));
       });
     }
     else {
@@ -357,6 +322,7 @@ var Master = {
     var aValeurs = aFils.map(function (a) {
       return a.valeur;
     });
+
     if (current_level_prediction % 2 == 0) {
       node.setValeur(Math.min.apply(null, aValeurs));
     }
@@ -372,130 +338,144 @@ var Master = {
   // Donne un nombre de point à la branche en fonction de son potentiel
   // Algo 1 : donne des points en fonction du nombre de doublet/triplet que va former le nouveau jeton (dans tous les sens)
   // Algo 2 : donner un grand nombre de point pour contrer adversaire ayant un triplet
-  evalFeuille: function (type) {
-    return Math.floor((Math.random() * 7) + 1);
+  evalFeuille: function (colonne, virtual_token) {
+    var coord = Master.getCoordTokenByColumn(colonne, virtual_token);
 
-    var typeToken = 'ia_token';
-    if (type == IA_PLAYER2) {
-      typeToken = 'ia_token2';
+    virtual_token.forEach(function (colonne, index) {
+      if (index % 2 == 0) {
+        token_in_game[current_player].push(Master.getCoordTokenByColumn(colonne));
+      }
+      else {
+        token_in_game[enemy_player].push(Master.getCoordTokenByColumn(colonne));
+      }
+    });
+
+    // horizontal
+    var ptsH1 = 0;
+    var multiplicateur = 1;
+    for (var i = 1; i < 4; i++) {
+      var tmp_coord = new Coord(coord.x + i, coord.y);
+      if (token_in_game[current_player].indexOf(tmp_coord) > -1) {
+        ptsH1 = ptsH1 + multiplicateur;
+        multiplicateur++;
+      }
+      else {
+        break;
+      }
     }
 
-    //On donne des points en fonction du nombre de jeton de même couleurs sur les cases annexes (ex : v=5 si on est entouré de 5 jetons)
-    for (i = 0; i < arbre.fils.length; i++) {
-      valeur = 0;
-      col = arbre.fils[i].colonne;
-      var casec = $('.column_' + col + ':not(:has(div)):last');
-      caseX = casec.data('col');
-      caseY = casec.data('row');
-
-      //Horizontal
-      var ptsX = 0;
-      var multiplicateur = 1;
-      for (var j = 1; j < 4; j++) {
-        if ($(".puissance4_column[data-col='" + (caseX + j) + "'][data-row='" + (caseY) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsX = ptsX + (1 * multiplicateur);
-          multiplicateur++;
-        }
-        else {
-          break;
-        }
+    var ptsH2 = 0;
+    multiplicateur = 1;
+    for (var i = 1; i < 4; i++) {
+      var tmp_coord = new Coord(coord.x - i, coord.y);
+      if (token_in_game[current_player].indexOf(tmp_coord) > -1) {
+        ptsH2 = ptsH2 + multiplicateur;
+        multiplicateur++;
       }
-      for (var k = 1; k < 4; k++) {
-        if ($(".puissance4_column[data-col='" + (caseX - k) + "'][data-row='" + (caseY) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsX = ptsX + (1 * multiplicateur);
-          multiplicateur++;
-        }
-        else {
-          break;
-        }
-      }
-      //Vertical
-      var ptsY = 0;
-      var multiplicateur = 1;
-      for (var j = 1; j < 4; j++) {
-        if ($(".puissance4_column[data-col='" + (caseX) + "'][data-row='" + (caseY + j) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsY = ptsY + (1 * multiplicateur);
-          multiplicateur++;
-        }
-        else {
-          break;
-        }
-      }
-      for (var k = 1; k < 4; k++) {
-        if ($(".puissance4_column[data-col='" + (caseX) + "'][data-row='" + (caseY - k) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsY = ptsY + (1 * multiplicateur);
-          multiplicateur++;
-        }
-        else {
-          break;
-        }
-      }
-      //Diagonale 1
-      var ptsD1 = 0;
-      var multiplicateur = 1;
-      for (var j = 1; j < 4; j++) {
-        if ($(".puissance4_column[data-col='" + (caseX + j) + "'][data-row='" + (caseY + j) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsD1 = ptsD1 + (1 * multiplicateur);
-          multiplicateur++;
-        }
-        else {
-          break;
-        }
-      }
-      for (var k = 1; k < 4; k++) {
-        if ($(".puissance4_column[data-col='" + (caseX - k) + "'][data-row='" + (caseY - k) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsD1 = ptsD1 + (1 * multiplicateur);
-          multiplicateur++;
-        }
-        else {
-          break;
-        }
-      }
-      //Diagonale 2
-      var ptsD2 = 0;
-      var multiplicateur = 1;
-      for (var j = 1; j < 4; j++) {
-        if ($(".puissance4_column[data-col='" + (caseX + j) + "'][data-row='" + (caseY - j) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsD2 = ptsD2 + (1 * multiplicateur);
-          multiplicateur++;
-        }
-        else {
-          break;
-        }
-      }
-      for (var k = 1; k < 4; k++) {
-        if ($(".puissance4_column[data-col='" + (caseX - k) + "'][data-row='" + (caseY + k) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsD2 = ptsD2 + (1 * multiplicateur);
-          multiplicateur++;
-        }
-        else {
-          break;
-        }
-      }
-      arbre.fils[i].valeur = ptsX + ptsY + ptsD1 + ptsD2;
-      arbre.fils[i].ptsX = ptsX;
-      arbre.fils[i].ptsY = ptsY;
-      arbre.fils[i].ptsD1 = ptsD1;
-      arbre.fils[i].ptsD2 = ptsD2;
-
-      //On donne des points pour les contres, si l'ennemi peut gagner avec une case on la bloque
-      var coord = Master.getCoordJetonByColumn(arbre.fils[i].colonne);
-      var endNextMove = false;
-      if (type == IA_PLAYER) {
-        var player_ennemi = IA_PLAYER2;
-        if ($('#typeJoueur2').val() == 0) {
-          player_ennemi = HUMAN_PLAYER;
-        }
-        endNextMove = Master.checkEnd(coord['x'], coord['y'], player_ennemi, true);
-      }
-      if (type == IA_PLAYER2) {
-        endNextMove = Master.checkEnd(coord['x'], coord['y'], IA_PLAYER, true);
-      }
-      if (endNextMove) {
-        arbre.fils[i].valeur += 100;
-        arbre.fils[i].ptsContre = 100;
+      else {
+        break;
       }
     }
+
+    //Vertical
+    var ptsV1 = 0;
+    multiplicateur = 1;
+    for (var i = 1; i < 4; i++) {
+      var tmp_coord = new Coord(coord.x, coord.y + i);
+      if (token_in_game[current_player].indexOf(tmp_coord)) {
+        ptsV1 = ptsV1 + multiplicateur;
+        multiplicateur++;
+      }
+      else {
+        break;
+      }
+    }
+
+    var ptsV2 = 0;
+    multiplicateur = 1;
+    for (var i = 1; i < 4; i++) {
+      var tmp_coord = new Coord(coord.x, coord.y - i);
+      if (token_in_game[current_player].indexOf(tmp_coord)) {
+        ptsV2 = ptsV2 + multiplicateur;
+        multiplicateur++;
+      }
+      else {
+        break;
+      }
+    }
+    
+    //Diagonale 1
+    var ptsD1 = 0;
+    multiplicateur = 1;
+    for (var i = 1; i < 4; i++) {
+      var tmp_coord = new Coord(coord.x + i, coord.y + i);
+      if (token_in_game[current_player].indexOf(tmp_coord)) {
+        ptsD1 = ptsD1 + multiplicateur;
+        multiplicateur++;
+      }
+      else {
+        break;
+      }
+    }
+    var ptsD2 = 0;
+    multiplicateur = 1;
+    for (var i = 1; i < 4; i++) {
+      var tmp_coord = new Coord(coord.x - i, coord.y - i);
+      if (token_in_game[current_player].indexOf(tmp_coord)) {
+        ptsD2 = ptsD2 + multiplicateur;
+        multiplicateur++;
+      }
+      else {
+        break;
+      }
+    }
+    var ptsD3 = 0;
+    multiplicateur = 1;
+    for (var i = 1; i < 4; i++) {
+      var tmp_coord = new Coord(coord.x - i, coord.y + i);
+      if (token_in_game[current_player].indexOf(tmp_coord)) {
+        ptsD3 = ptsD3 + multiplicateur;
+        multiplicateur++;
+      }
+      else {
+        break;
+      }
+    }
+    var ptsD4 = 0;
+    multiplicateur = 1;
+    for (var i = 1; i < 4; i++) {
+      var tmp_coord = new Coord(coord.x + i, coord.y - i);
+      if (token_in_game[current_player].indexOf(tmp_coord)) {
+        ptsD4 = ptsD4 + multiplicateur;
+        multiplicateur++;
+      }
+      else {
+        break;
+      }
+    }
+
+    var valeur = ptsH1 + ptsH2 + ptsV1 + ptsV2 + ptsD1 + ptsD2 + ptsD3 + ptsD4;
+
+    //On donne des points pour les contres, si l'ennemi peut gagner avec une case on la bloque
+    var endNextMove = false;
+    //    if (current_player == IA_PLAYER) {
+    //      var player_ennemi = IA_PLAYER2;
+    //      if ($('#typeJoueur2').val() == 0) {
+    //        player_ennemi = HUMAN_PLAYER;
+    //      }
+    //      endNextMove = Master.checkEnd(coord);
+    //    }
+    //    else if (current_player == IA_PLAYER2) {
+    //      endNextMove = Master.checkEnd(coord);
+    //    }
+
+    if (endNextMove) {
+      valeur += 100;
+    }
+
+    //$('.invisibleToDelete').remove();
+
+    return valeur;
   }
 }
 
