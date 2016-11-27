@@ -1,5 +1,6 @@
 table{
 	border : 1px solid black;
+	border-collapse: collapse;
 }
 table td {
 	border : 1px solid black;
@@ -13,11 +14,14 @@ table td {
 	border-radius:25px;
 	background-color:black;
 }
-.human_token{
+.human_token,.token0{
 	background-color:red;
 }
-.token[data-player="1"] {
+.token[data-player="1"], .token1 {
 	background-color:gold;
+}
+.token2{
+	background-color:black;
 }
 .caseJoueur{
 	position:relative;
@@ -27,4 +31,27 @@ table td {
 	border:1px solid black;
 	padding:10px;
 	margin-bottom:10px;
+}
+#historique table{
+	border-collapse: collapse;
+}
+#historique table td {
+	width:10px;
+	height:10px;
+}
+#historique .token{
+	width:10px;
+	height:10px
+}
+#historique .tableHistorique{
+	position:relative;
+	float:left;
+	margin-right:5px
+}
+#historique .last{
+	background-color:green;
+}
+canvas{
+	width: 100% !important;
+	height: auto !important;
 }

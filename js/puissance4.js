@@ -2,6 +2,23 @@ const HUMAN_PLAYER = 0;
 const IA_PLAYER = 1;
 const IA_PLAYER2 = 2;
 
+var nbPartie = 0;
+var nbCoup = 0;
+var tempsPartie = 0;
+
+var nbPartieSession = 0;
+var nbCoupSession = 0;
+var tempsSession = 0;
+
+var tabTempsCoup = new Array();
+var tabNbCoup = new Array();
+var tabPartie = new Array();
+
+var nbWin1 = 0;
+var nbWin2 = 0;
+
+var historique;
+
 var current_player = null;
 var enemy_player = null;
 
@@ -26,7 +43,7 @@ var Master = {
 
       if (Master.checkEnd(coord)) {
         Master.displayMessage("Vainqueur : Humain");
-        Master.disableButton();
+        Master.endGame();
       }
       else {
         current_player = IA_PLAYER;
@@ -34,7 +51,71 @@ var Master = {
       }
     });
   },
+  endGame: function () {
+    tempsPartie = Math.round(new Date().getTime()) - tempsPartie;
+
+    Master.disableButton();
+    renderHistorique(historique);
+
+    //Nombre de partie et nombre partie gagants
+    nbPartie++;
+    if (current_player == IA_PLAYER) {
+      nbWin1++
+    }
+    else {
+      nbWin2++;
+    }
+    $('.nbPartie').html(nbPartie);
+    $('#nbVictoire1').html(nbWin1);
+    $('#nbVictoire2').html(nbWin2);
+
+    //Nombre de coups joués
+    nbCoupSession = nbCoupSession + nbCoup;
+    nbCoupSessionMoyen = nbCoupSession / nbPartie;
+    $('#nbCoupPartie').html(nbCoup);
+    $('#nbCoupSession').html(nbCoupSessionMoyen);
+
+    //Temps d'exection
+    tempsSession = tempsSession + tempsPartie;
+    tempsSessionMoyen = tempsSession / nbPartie;
+    if (tempsSessionMoyen < 1000) {
+      tempsSessionMoyen = tempsSessionMoyen + ' ms';
+    }
+    else {
+      tempsSessionMoyen = tempsSessionMoyen / 1000 + 's';
+    }
+    $('#tempsPartie').html(tempsPartie + ' ms');
+    $('#tempsSession').html(tempsSessionMoyen);
+
+    //Création des charts
+    tabPartie.push(nbPartie);
+
+    //Création chart temp
+    tabTempsCoup.push(tempsPartie);
+    Master.creerGraph("#myChart", tabPartie, tabTempsCoup, "Temps d'éxécution par partie");
+
+    //Création chart nbCoups
+    tabNbCoup.push(nbCoup);
+    Master.creerGraph("#myChart2", tabPartie, tabNbCoup, "Nombre de coups par partie");
+
+    nbPartieSession++;
+    //On a fini la session
+    if (nbPartieSession == $("#nbPartie").val()) {
+      nbPartieSession = 0;
+    }
+    //on continue
+    else {
+      Master.startGame();
+    }
+  },
   startGame: function () {
+    nbCoup = 0;
+    tempsPartie = Math.round(new Date().getTime());
+
+    //on initialise l'historique
+    $('#historique').html("");
+    historique = new Historique();
+
     $('.token').remove();
     Master.refreshButton();
     Master.displayMessage("Début de la partie");
@@ -91,6 +172,8 @@ var Master = {
     return (y < 1) ? false : new Coord(column_number, y);
   },
   addToken: function (column_number) {
+    nbCoup++;
+
     var coord = new Coord(column_number, null);
 
     var result = $('.column_' + column_number).toArray().reverse().some(function (element) {
@@ -103,6 +186,8 @@ var Master = {
         return true;
       }
     });
+
+    addCoupHistorique(historique, coord.y, coord.x);
 
     return result ? coord : false;
   },
@@ -134,7 +219,7 @@ var Master = {
 
     if (Master.checkEnd(coord)) {
       Master.displayMessage("Vainqueur : IA " + current_player);
-      Master.disableButton();
+      Master.endGame();
     }
     else {
       Master.refreshButton();
@@ -149,6 +234,7 @@ var Master = {
     }
   },
   humanPlay: function () {
+    //On désactive les boutons des colonnes pleines
     for (var i = 1; i <= 7; i++) {
       if (Master.isFullColumn(i)) {
         $('#button' + i).attr('disabled', 'disabled');
@@ -256,6 +342,7 @@ var Master = {
       if (!Master.isFullColumn(i)) {
         return false;
       }
+      j++;
     }
 
     return true;
@@ -479,6 +566,40 @@ var Master = {
     else {
       return 1;
     }
+  },
+  creerGraph: function (selector, labelsParam, dataParam, labelParam) {
+    var ctx = $(selector);
+    var data = {
+      labels: labelsParam,
+      datasets: [
+        {
+          label: labelParam,
+          fill: false,
+          lineTension: 0.1,
+          backgroundColor: "rgba(75,192,192,0.4)",
+          borderColor: "rgba(75,192,192,1)",
+          borderCapStyle: 'butt',
+          borderDash: [],
+          borderDashOffset: 0.0,
+          borderJoinStyle: 'miter',
+          pointBorderColor: "rgba(75,192,192,1)",
+          pointBackgroundColor: "#fff",
+          pointBorderWidth: 1,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: "rgba(75,192,192,1)",
+          pointHoverBorderColor: "rgba(220,220,220,1)",
+          pointHoverBorderWidth: 2,
+          pointRadius: 1,
+          pointHitRadius: 10,
+          data: dataParam,
+          spanGaps: false,
+        }
+      ]
+    };
+    var myLineChart = new Chart(ctx, {
+      type: 'line',
+      data: data
+    });
   }
 }
 
