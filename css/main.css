@@ -16,8 +16,8 @@ table td {
 .human_token{
 	background-color:red;
 }
-.ia_token{
-	background-color:yellow;
+.token[data-player="1"] {
+	background-color:gold;
 }
 .caseJoueur{
 	position:relative;
@@ -27,8 +27,4 @@ table td {
 	border:1px solid black;
 	padding:10px;
 	margin-bottom:10px;
-}
-
-.invisibleToDelete {
-	display: none;
 }

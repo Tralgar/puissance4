@@ -3,28 +3,25 @@ function Arbre(aFils) {
 }
 
 Arbre.prototype.getMax = function () {
-  var colonne_a_jouer = 0;
+  var aValeurs = [];
   var max_valeur = 0;
   this.fils.forEach(function (valeur) {
-    // si c'est la meme valeur, 1 chance sur 2 de prendre la nouvelle pour le random de norman
     if (valeur.valeur == max_valeur) {
-      if (Math.floor((Math.random() * 2) + 1) == 2) {
-        colonne_a_jouer = valeur.colonne;
-      }
+      aValeurs.push(valeur.colonne);
     }
-    if (valeur.valeur > max_valeur) {
+    else if (valeur.valeur > max_valeur) {
       max_valeur = valeur.valeur;
-      colonne_a_jouer = valeur.colonne;
+      aValeurs = [valeur.colonne];
     }
   });
 
-  return colonne_a_jouer;
+  return aValeurs.getRandomValue();
 
-//  var aValeurs = this.fils.map(function (a) {
-//    return a.valeur;
-//  });
-//
-//  return Math.max.apply(null, aValeurs);
+  //  var aValeurs = this.fils.map(function (a) {
+  //    return a.valeur;
+  //  });
+  //
+  //  return Math.max.apply(null, aValeurs);
 };
 
 function Noeud(colonne) {
@@ -46,15 +43,19 @@ function Feuille(colonne, valeur) {
   this.valeur = valeur;
 }
 
-Array.prototype.randomValue = function () {
+Array.prototype.getRandomValue = function () {
   return this[Math.floor(Math.random() * this.length)];
 };
+
+Array.prototype.isInArray = function (coord) {
+  return this.some(function (element) {
+    if ((element.x == coord.x) && (element.y == coord.y)) {
+      return true;
+    }
+  });
+}
 
 function Coord(x, y) {
   this.x = x;
   this.y = y;
-}
-
-Coord.prototype.getCoord = function() {
-  return [this.x, this.y];
 }
