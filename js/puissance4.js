@@ -18,212 +18,218 @@ var nbWin1 = 0;
 var nbWin2 = 0;
 
 var historique;
-var arbre = [];
-var level_prediction = 1;
+
+var current_player = null;
+var enemy_player = null;
+
+var level_prediction = {};
+var eval_type = {};
+
+var token_in_game = [];
+
+// @todo : axe amélioration -ne pas reconstruire le token_in_game
+// @todo : L'eval prend la meme fonction d'eval pour le min max pour l'adversaire !
+// @todo : eval feuille avec check end pas l'air de fonctionner + level prevision pair impair ca fait quoi ?
 
 var Master = {
   init: function () {
-    console.log('Initialisation');
-
-    // checker la diffultée
     $('#button-start').click(function () {
       Master.startGame();
     });
 
-    //L'humain clique sur le bouton, ajoute son pion et redonne la main à l'IA
     $('#puissance4-actionRow th button').click(function () {
-      var coord = Master.addToken($(this).data('col'), HUMAN_PLAYER);
-      if (Master.checkEnd(coord['x'], coord['y'], HUMAN_PLAYER)) {
+      current_player = HUMAN_PLAYER;
+      var coord = Master.addToken($(this).data('col'));
+
+      if (Master.checkEnd(coord)) {
         Master.displayMessage("Vainqueur : Humain");
-		Master.endGame();
+        Master.endGame();
       }
       else {
-        Master.iAPlay(IA_PLAYER);
+        current_player = IA_PLAYER;
+        Master.iAPlay();
       }
     });
   },
-  endGame: function (type) {
-	  tempsPartie = Math.round(new Date().getTime()) - tempsPartie;
-	  
-	  Master.disableButton();
-	  renderHistorique(historique);
-	  
-	  //Nombre de partie et nombre partie gagants
-	  nbPartie++;
-	  if(type==2){nbWin2++}
-	  else{nbWin1++;}
-	  $('.nbPartie').html(nbPartie);
-	  $('#nbVictoire1').html(nbWin1);
-	  $('#nbVictoire2').html(nbWin2);
-	  
-	  //Nombre de coups joués
-	  nbCoupSession = nbCoupSession + nbCoup;
-	  nbCoupSessionMoyen = nbCoupSession / nbPartie;
-	  $('#nbCoupPartie').html(nbCoup);
-	  $('#nbCoupSession').html(nbCoupSessionMoyen);
-	  
-	  //Temps d'exection
-	  tempsSession = tempsSession + tempsPartie;
-	  tempsSessionMoyen = tempsSession / nbPartie;
-	  if(tempsSessionMoyen<1000){tempsSessionMoyen = tempsSessionMoyen + ' ms';}
-	  else{tempsSessionMoyen = tempsSessionMoyen/1000 + 's';}
-	  $('#tempsPartie').html(tempsPartie + ' ms');
-	  $('#tempsSession').html(tempsSessionMoyen);
-	  
-	  
-	  //Création des charts
-	  tabPartie.push(nbPartie);
-	  
-	  //Création chart temp
-	  tabTempsCoup.push(tempsPartie);
-	  Master.creerGraph("#myChart",tabPartie,tabTempsCoup,"Temps d'éxécution par partie");
-	  
-	  //Création chart nbCoups
-	  tabNbCoup.push(nbCoup);
-	  Master.creerGraph("#myChart2",tabPartie,tabNbCoup,"Nombre de coups par partie");
-	  
-	  nbPartieSession++;
-	  //On a fini la session
-	  if(nbPartieSession == $("#nbPartie").val()){
-		  nbPartieSession = 0;
-	  }
-	  //on continue
-	  else{
-		  Master.startGame();
-	  }
+  endGame: function () {
+    tempsPartie = Math.round(new Date().getTime()) - tempsPartie;
+
+    Master.disableButton();
+    renderHistorique(historique);
+
+    //Nombre de partie et nombre partie gagants
+    nbPartie++;
+    if (current_player == IA_PLAYER) {
+      nbWin1++
+    }
+    else {
+      nbWin2++;
+    }
+    $('.nbPartie').html(nbPartie);
+    $('#nbVictoire1').html(nbWin1);
+    $('#nbVictoire2').html(nbWin2);
+
+    //Nombre de coups joués
+    nbCoupSession = nbCoupSession + nbCoup;
+    nbCoupSessionMoyen = nbCoupSession / nbPartie;
+    $('#nbCoupPartie').html(nbCoup);
+    $('#nbCoupSession').html(nbCoupSessionMoyen);
+
+    //Temps d'exection
+    tempsSession = tempsSession + tempsPartie;
+    tempsSessionMoyen = tempsSession / nbPartie;
+    if (tempsSessionMoyen < 1000) {
+      tempsSessionMoyen = tempsSessionMoyen + ' ms';
+    }
+    else {
+      tempsSessionMoyen = tempsSessionMoyen / 1000 + 's';
+    }
+    $('#tempsPartie').html(tempsPartie + ' ms');
+    $('#tempsSession').html(tempsSessionMoyen);
+
+    //Création des charts
+    tabPartie.push(nbPartie);
+
+    //Création chart temp
+    tabTempsCoup.push(tempsPartie);
+    Master.creerGraph("#myChart", tabPartie, tabTempsCoup, "Temps d'éxécution par partie");
+
+    //Création chart nbCoups
+    tabNbCoup.push(nbCoup);
+    Master.creerGraph("#myChart2", tabPartie, tabNbCoup, "Nombre de coups par partie");
+
+    nbPartieSession++;
+    //On a fini la session
+    if (nbPartieSession == $("#nbPartie").val()) {
+      nbPartieSession = 0;
+    }
+    //on continue
+    else {
+      Master.startGame();
+    }
   },
   startGame: function () {
-	nbCoup = 0;
-	tempsPartie = Math.round(new Date().getTime());
-	
-	//on initialise l'historique
-	$('#historique').html("");
-	historique = new Historique();
-	
+    nbCoup = 0;
+    tempsPartie = Math.round(new Date().getTime());
+
+    //on initialise l'historique
+    $('#historique').html("");
+    historique = new Historique();
+
     $('.token').remove();
     Master.refreshButton();
     Master.displayMessage("Début de la partie");
 
-    level_prediction = $('#nbCoup1').val();
+    var player1 = $('#typeJoueur1').val();
+    var player2 = $('#typeJoueur2').val();
 
-    var random = (Math.floor((Math.random() * 10) + 1) <= 5);
-    if (random) {
-      if ($('#typeJoueur2').val() == 1) {
-        Master.iAPlay(IA_PLAYER2);
+    level_prediction[player1] = $('#nbCoup1').val();
+    level_prediction[player2] = $('#nbCoup2').val();
+
+    eval_type[player1] = $('#heuristique1').val();
+    eval_type[player2] = $('#heuristique2').val();
+
+    if (Math.floor((Math.random() * 2) + 1) == 1) {
+      current_player = player2;
+      enemy_player = IA_PLAYER;
+
+      if (current_player == IA_PLAYER2) {
+        Master.iAPlay();
       }
       else {
+        current_player = HUMAN_PLAYER;
         Master.humanPlay();
       }
     }
     else {
-      Master.iAPlay(IA_PLAYER);
+      current_player = IA_PLAYER;
+      enemy_player = player2;
+      Master.iAPlay();
     }
   },
-  //Renvoie les coodonnée X/Y de la prochaine case à jouer d'une colonne
-  getCoordJetonByColumn: function (column_number) {
-    var aResult = new Array;
-    aResult['y'] = column_number;
-    end = false;
+  setPlayers: function () {
+    var tmp_player = current_player;
+    current_player = enemy_player;
+    enemy_player = tmp_player;
+  },
+  getCoordTokenByColumn: function (column_number, virtual_token) {
+    // @todo : axe d'amélioration par ex ID et pas de foreach etc...
+    var y = 0;
     $('.column_' + column_number).toArray().reverse().forEach(function (element) {
       if ($(element).has('div').length == 0) {
-        if (!end) {
-          aResult['x'] = $(element).parent().data('ligne');
-          end = true;
-        }
+        y = $(element).parent().data('ligne');
       }
     });
-    if (aResult['x'] <= 0) {
-      return false;
+
+    if (typeof virtual_token !== 'undefined') {
+      virtual_token.forEach(function (colonne) {
+        if (colonne == column_number) {
+          y -= 1;
+        }
+      });
     }
-    return aResult;
+
+    return (y < 1) ? false : new Coord(column_number, y);
   },
-  addToken: function (column_number, player_type) {
+  addToken: function (column_number) {
     nbCoup++;
-	
-	var aResult = Array;
-    aResult['y'] = column_number;
-    if (player_type == HUMAN_PLAYER || player_type == IA_PLAYER2) {
-      end = false;
-      $('.column_' + column_number).toArray().reverse().forEach(function (element) {
-        if ($(element).has('div').length == 0) {
-          if (!end) {
-            if (player_type == HUMAN_PLAYER) {
-              $(element).append('<div class="token human_token"></div>');
-            }
-            else {
-              $(element).append('<div class="token ia_token2"></div>');
-            }
-            aResult['x'] = $(element).parent().data('ligne');
-            end = true;
-          }
+
+    var coord = new Coord(column_number, null);
+
+    var result = $('.column_' + column_number).toArray().reverse().some(function (element) {
+      if ($(element).has('div').length == 0) {
+        $(element).append('<div class="token" data-player="' + current_player + '"></div>');
+        coord.y = $(element).parent().data('ligne');
+        if (current_player != HUMAN_PLAYER) {
+          token_in_game[current_player].push(coord);
         }
-      });
-    }
-    else if (player_type == IA_PLAYER) {
-      end = false;
-      $('.column_' + column_number).toArray().reverse().forEach(function (element) {
-        if ($(element).has('div').length == 0) {
-          if (!end) {
-            $(element).append('<div class="token ia_token"></div>');
-            aResult['x'] = $(element).parent().data('ligne');
-            end = true;
-          }
-        }
-      });
-    }
-    else {
-      alert('AddToken  : player_type inconnu');
-    }
-	//Maj historique
-	addCoupHistorique(historique,aResult['y'],aResult['x'],player_type);
-	
-    //FIN
-    return aResult;
+        return true;
+      }
+    });
+
+    addCoupHistorique(historique, coord.y, coord.x);
+
+    return result ? coord : false;
   },
-  iAPlay: function (TYPE_IA) {
+  iAPlay: function () {
     Master.disableButton();
-    Master.displayMessage("Tour IA " + TYPE_IA);
+    Master.displayMessage("Tour IA " + current_player);
 
-    arbre = new Arbre(Master.creerArbre());
+    token_in_game[current_player] = [];
+    token_in_game[enemy_player] = [];
 
-    //On parcours les fils de la branche en cours
-    var colMax = null;
-    var arrayMax = new Array;
-    for (i = 0; i < arbre.fils.length; i++) {
-      //console.log(arbre.fils[i]);
-      if (colMax == null || arbre.fils[i].valeur > colMax) {
-        colMax = arbre.fils[i].valeur;
-        arrayMax = new Array;
-        arrayMax[0] = arbre.fils[i].colonne;
+    $('div[data-player]').each(function () {
+      var parent = $(this).parent();
+      token_in_game[$(this).attr('data-player')].push(new Coord(parent.attr('data-col'), parent.attr('data-row')));
+    });
 
-      }
-      else if (colMax == arbre.fils[i].valeur) {
-        arrayMax[arrayMax.length] = arbre.fils[i].colonne;
-      }
+    var arbre = new Arbre(Master.creerArbre());
+
+    if (token_in_game[current_player].length == 10 && current_player == 1)
+      console.log(JSON.stringify(arbre, null, '\t'));
+
+    var colonne = arbre.getMax();
+    if (colonne == 0) {
+      colonne = Master.getColumnPlay()[0];
     }
-    //SI plusieurs possibilité ont les même valeurs on choisi aléatoirement
-    var nombreAleatoire = Math.floor(Math.random() * (arrayMax.length - 0));
-    coord = Master.addToken(arrayMax[nombreAleatoire], TYPE_IA);
+    var coord = Master.addToken(colonne);
 
-    //WIN
-    if (Master.checkEnd(coord['x'], coord['y'], TYPE_IA)) {
-      Master.displayMessage("Vainqueur : IA " + TYPE_IA);
-	  Master.endGame(TYPE_IA);
+    if (token_in_game[current_player].length == 10 && current_player == 1)
+      console.log(coord);
+
+    if (Master.checkEnd(coord)) {
+      Master.displayMessage("Vainqueur : IA " + current_player);
+      Master.endGame();
     }
-    //On continue
     else {
       Master.refreshButton();
-      if ($("#typeJoueur2").val() == 0) {
+      if (enemy_player == HUMAN_PLAYER) {
+        Master.setPlayers();
         Master.humanPlay();
       }
       else {
-        if (TYPE_IA == 1) {
-          Master.iAPlay(IA_PLAYER2);
-        }
-        else {
-          Master.iAPlay(IA_PLAYER);
-        }
-
+        Master.setPlayers();
+        Master.iAPlay();
       }
     }
   },
@@ -237,139 +243,109 @@ var Master = {
     Master.displayMessage("Tour Humain");
   },
   getColumnPlay: function (virtual_token) {
-    var aTable = [];
+    var aColumns = [];
     for (var i = 1; i <= 7; i++) {
       if (!Master.isFullColumn(i, virtual_token)) {
-        aTable.push(i);
+        aColumns.push(i);
       }
     }
-    return aTable;
+    return aColumns;
   },
-  //On check si on finit on plaçant un pion au coord (x,y)
-  checkEnd: function (x, y, type, forcePrevision) {
-    if (forcePrevision == 'undefined') {
-      forcePrevision = false;
-    }
-    var toCheck = 'ia_token';
-    if (type == HUMAN_PLAYER) {
-      toCheck = 'human_token';
-    }
-    if (type == IA_PLAYER2) {
-      toCheck = 'ia_token2';
+  checkEnd: function (coord, forcePrevision) {
+    if (typeof forcePrevision !== "undefined") {
+      token_in_game[current_player].push(coord);
     }
 
-    //Ajout d'un jeton invisible sur la case de prevision
-    if (forcePrevision) {
-      var elem = $(".puissance4_column[data-col='" + (y) + "'][data-row='" + (x) + "']");
-      if (elem.length > 0) {
-        elem.append('<div style="display:none" class="invisibleToDelete ' + toCheck + '"></div>');
-      }
-    }
-
-    var win = false;
-    var cpt = 0;
-    //On check horizontalement
-    for (var i = 1; i <= 7; i++) {
-      elem = $('#row-' + x + ' .column_' + i);
-      if (elem.children().length > 0) {
-        token = elem.children();
-        if (token.hasClass(toCheck)) {
-          cpt++;
-        }
-        else {
-          cpt = 0;
-        }
-      }
-      else {
-        cpt = 0;
-      }
-      if (cpt == 4) {
-        win = true;
-      }
-    }
-
+    var i = 0;
     //On check verticalement
     var cpt = 0;
+    for (i = 1; i <= 7; i++) {
+      if (token_in_game[current_player].isInArray(new Coord(coord.x, i))) {
+        cpt++;
+        if (cpt == 4) {
+          return true;
+        }
+      }
+      else {
+        cpt = 0;
+      }
+    }
+
+    //On check horizontalement
+    cpt = 0;
+    for (i = 1; i <= 7; i++) {
+      if (token_in_game[current_player].isInArray(new Coord(i, coord.y))) {
+        cpt++;
+        if (cpt == 4) {
+          return true;
+        }
+      }
+      else {
+        cpt = 0;
+      }
+    }
+
+    var x = 1;
+    var y = 1;
+    cpt = 0;
+    if (coord.x < coord.y) {
+      y = coord.y - coord.x + 1;
+    }
+    else if (coord.x > coord.y) {
+      x = coord.x - coord.y + 1;
+    }
+
+    while (x <= 7 && y <= 6) {
+      if (token_in_game[current_player].isInArray(new Coord(x, y))) {
+        cpt++;
+        if (cpt == 4) {
+          return true;
+        }
+      }
+      else {
+        cpt = 0;
+      }
+
+      x++;
+      y++;
+    }
+
+    x = 7;
+    y = 1;
+    cpt = 0;
+    var add_coord = coord.x + coord.y;
+    if (add_coord <= 8) {
+      x = add_coord - y;
+    }
+    else {
+      y = add_coord - x;
+    }
+
+    while (x >= 1 && y <= 6) {
+      if (token_in_game[current_player].isInArray(new Coord(x, y))) {
+        cpt++;
+        if (cpt == 4) {
+          return true;
+        }
+      }
+      else {
+        cpt = 0;
+      }
+
+      x--;
+      y++;
+    }
+
+    token_in_game[current_player].pop();
+
     for (var i = 1; i <= 7; i++) {
-      elem = $('#row-' + i + ' .column_' + y);
-      if (elem.children().length > 0) {
-        token = elem.children();
-        if (token.hasClass(toCheck)) {
-          cpt++;
-        }
-        else {
-          cpt = 0;
-        }
-      }
-      else {
-        cpt = 0;
-      }
-      if (cpt == 4) {
-        win = true;
-      }
-    }
-
-    //On check diagonale 1
-    var cpt = 0;
-    var start = x - (y - 1);
-    if (start < 0) {
-      start = 0;
-    }
-    var j = 1;
-    for (var i = start; i <= 7; i++) {
-      elem = $('#row-' + i + ' .column_' + j);
-      if (elem.children().length > 0) {
-        token = elem.children();
-        if (token.hasClass(toCheck)) {
-          cpt++;
-        }
-        else {
-          cpt = 0;
-        }
-      }
-      else {
-        cpt = 0;
-      }
-      if (cpt == 4) {
-        win = true;
+      if (!Master.isFullColumn(i)) {
+        return false;
       }
       j++;
     }
 
-    //On check diagonale 2
-    var cpt = 0;
-    var startY = 7;
-    var startX = y - (7 - x);
-    var j = startX;
-    if (startY < 0) {
-      startY = 0;
-    }
-
-    for (var i = startY; i > 0; i--) {
-      elem = $('#row-' + j + ' .column_' + i);
-      if (elem.children().length > 0) {
-        token = elem.children();
-        if (token.hasClass(toCheck)) {
-          cpt++;
-        }
-        else {
-          cpt = 0;
-        }
-      }
-      else {
-        cpt = 0;
-      }
-      if (cpt == 4) {
-        win = true;
-      }
-      j++;
-    }
-
-    if (forcePrevision) {
-      $('.invisibleToDelete').remove();
-    }
-
-    return win;
+    return true;
   },
   displayMessage: function (str) {
     setTimeout(function () {
@@ -385,11 +361,13 @@ var Master = {
     $('#puissance4-actionRow button').removeAttr('disabled');
   },
   isFullColumn: function (column_number, virtual_token) {
-    var case_to_test = 1;
+    var case_to_test = 6;
     if (typeof virtual_token !== 'undefined') {
-      if (virtual_token.indexOf(column_number) >= 0) { //@todo remplacer if par while et corriger le tableau virtual token
-        case_to_test += 1;
-      }
+      virtual_token.forEach(function (colonne) {
+        if (colonne == column_number) {
+          case_to_test -= 1;
+        }
+      });
     }
 
     return $('#row-' + case_to_test + ' .column_' + column_number + ' div').length ? true : false;
@@ -397,11 +375,11 @@ var Master = {
   creerArbre: function () {
     var aFils = [];
     Master.getColumnPlay().forEach(function (colonne) {
-      if (level_prediction > 1) {
-        var node = Master.createNode(colonne, 1);
+      if (level_prediction[current_player] >= 1) {
+        var node = Master.creerNoeud(colonne, 1);
       }
       else {
-        var node = new Feuille(colonne, 1); //@todo remplacer par la fonction d'eval
+        var node = new Feuille(colonne, Master.evalFeuille(colonne));
       }
 
       aFils.push(node);
@@ -409,189 +387,219 @@ var Master = {
 
     return aFils;
   },
-  createNode: function (colonne, current_level_prediction, virtual_token) {
+  creerNoeud: function (colonne, current_level_prediction, virtual_token) {
     var virtual_token = (typeof virtual_token !== 'undefined') ? virtual_token : [];
     var node = new Noeud(colonne);
     var aFils = [];
 
     virtual_token.push(colonne);
 
-    if (current_level_prediction == level_prediction) {
-      //console.log(virtual_token);
+    if (current_level_prediction == level_prediction[current_player]) {
       Master.getColumnPlay(virtual_token).forEach(function (colonne) {
-        aFils.push(new Feuille(colonne, 1)); // 1 valeur de la feuille @todo remplacer par la fonction d'eval
+        aFils.push(new Feuille(colonne, Master.evalFeuille(colonne, virtual_token)));
       });
     }
     else {
       Master.getColumnPlay(virtual_token).forEach(function (colonne) {
         var tmp_current_level = current_level_prediction;
-        aFils.push(Master.createNode(colonne, ++tmp_current_level, virtual_token));
+        aFils.push(Master.creerNoeud(colonne, ++tmp_current_level, virtual_token));
       });
     }
 
+    var aValeurs = aFils.map(function (a) {
+      return a.valeur;
+    });
+
+    if (current_level_prediction % 2 == 0) {
+      node.setValeur(Math.max.apply(null, aValeurs));
+    }
+    else {
+      node.setValeur(Math.min.apply(null, aValeurs));
+    }
+
     node.setFils(aFils);
+    virtual_token.pop();
 
     return node;
   },
-  // Donne un nombre de point à la branche en fonction de son potentiel
-  // Algo 1 : donne des points en fonction du nombre de doublet/triplet que va former le nouveau jeton (dans tous les sens)
-  // Algo 2 : donner un grand nombre de point pour contrer adversaire ayant un triplet
-  evalFeuille: function (type) {
-    var typeToken = 'ia_token';
-    if (type == IA_PLAYER2) {
-      typeToken = 'ia_token2';
+  evalFeuille: function (colonne, virtual_token) {
+    // @todo : est-ce que le virtual token est bien dans l'ordre ou des que la longueur est 1 c'est ennemi ou current ?
+    if (eval_type[current_player] == 0) {
+      return Math.floor((Math.random() * 100) + 1);
     }
+    else if (eval_type[current_player] == 1) {
+      var coord = Master.getCoordTokenByColumn(colonne, virtual_token);
 
-    //On donne des points en fonction du nombre de jeton de même couleurs sur les cases annexes (ex : v=5 si on est entouré de 5 jetons)
-    for (i = 0; i < arbre.fils.length; i++) {
-      valeur = 0;
-      col = arbre.fils[i].colonne;
-      var casec = $('.column_' + col + ':not(:has(div)):last');
-      caseX = casec.data('col');
-      caseY = casec.data('row');
+      if (typeof virtual_token !== 'undefined') {
+        virtual_token.forEach(function (colonne, index) {
+          if (index % 2 == 0) {
+            token_in_game[current_player].push(Master.getCoordTokenByColumn(colonne));
+          }
+          else {
+            token_in_game[enemy_player].push(Master.getCoordTokenByColumn(colonne));
+          }
+        });
+      }
 
-      //Horizontal
-      var ptsX = 0;
+      // horizontal
+      var ptsH1 = 0;
       var multiplicateur = 1;
-      for (var j = 1; j < 4; j++) {
-        if ($(".puissance4_column[data-col='" + (caseX + j) + "'][data-row='" + (caseY) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsX = ptsX + (1 * multiplicateur);
+      for (var i = 1; i < 4; i++) {
+        var tmp_coord = new Coord(coord.x + i, coord.y);
+        if (token_in_game[current_player].isInArray(tmp_coord) > -1) {
+          ptsH1 = ptsH1 + multiplicateur;
           multiplicateur++;
         }
         else {
           break;
         }
       }
-      for (var k = 1; k < 4; k++) {
-        if ($(".puissance4_column[data-col='" + (caseX - k) + "'][data-row='" + (caseY) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsX = ptsX + (1 * multiplicateur);
+
+      var ptsH2 = 0;
+      multiplicateur = 1;
+      for (var i = 1; i < 4; i++) {
+        var tmp_coord = new Coord(coord.x - i, coord.y);
+        if (token_in_game[current_player].isInArray(tmp_coord) > -1) {
+          ptsH2 = ptsH2 + multiplicateur;
           multiplicateur++;
         }
         else {
           break;
         }
       }
+
       //Vertical
-      var ptsY = 0;
-      var multiplicateur = 1;
-      for (var j = 1; j < 4; j++) {
-        if ($(".puissance4_column[data-col='" + (caseX) + "'][data-row='" + (caseY + j) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsY = ptsY + (1 * multiplicateur);
+      var ptsV1 = 0;
+      multiplicateur = 1;
+      for (var i = 1; i < 4; i++) {
+        var tmp_coord = new Coord(coord.x, coord.y + i);
+        if (token_in_game[current_player].isInArray(tmp_coord)) {
+          ptsV1 = ptsV1 + multiplicateur;
           multiplicateur++;
         }
         else {
           break;
         }
       }
-      for (var k = 1; k < 4; k++) {
-        if ($(".puissance4_column[data-col='" + (caseX) + "'][data-row='" + (caseY - k) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsY = ptsY + (1 * multiplicateur);
+
+      var ptsV2 = 0;
+      multiplicateur = 1;
+      for (var i = 1; i < 4; i++) {
+        var tmp_coord = new Coord(coord.x, coord.y - i);
+        if (token_in_game[current_player].isInArray(tmp_coord)) {
+          ptsV2 = ptsV2 + multiplicateur;
           multiplicateur++;
         }
         else {
           break;
         }
       }
+
       //Diagonale 1
       var ptsD1 = 0;
-      var multiplicateur = 1;
-      for (var j = 1; j < 4; j++) {
-        if ($(".puissance4_column[data-col='" + (caseX + j) + "'][data-row='" + (caseY + j) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsD1 = ptsD1 + (1 * multiplicateur);
+      multiplicateur = 1;
+      for (var i = 1; i < 4; i++) {
+        var tmp_coord = new Coord(coord.x + i, coord.y + i);
+        if (token_in_game[current_player].isInArray(tmp_coord)) {
+          ptsD1 = ptsD1 + multiplicateur;
           multiplicateur++;
         }
         else {
           break;
         }
       }
-      for (var k = 1; k < 4; k++) {
-        if ($(".puissance4_column[data-col='" + (caseX - k) + "'][data-row='" + (caseY - k) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsD1 = ptsD1 + (1 * multiplicateur);
-          multiplicateur++;
-        }
-        else {
-          break;
-        }
-      }
-      //Diagonale 2
       var ptsD2 = 0;
-      var multiplicateur = 1;
-      for (var j = 1; j < 4; j++) {
-        if ($(".puissance4_column[data-col='" + (caseX + j) + "'][data-row='" + (caseY - j) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsD2 = ptsD2 + (1 * multiplicateur);
+      multiplicateur = 1;
+      for (var i = 1; i < 4; i++) {
+        var tmp_coord = new Coord(coord.x - i, coord.y - i);
+        if (token_in_game[current_player].isInArray(tmp_coord)) {
+          ptsD2 = ptsD2 + multiplicateur;
           multiplicateur++;
         }
         else {
           break;
         }
       }
-      for (var k = 1; k < 4; k++) {
-        if ($(".puissance4_column[data-col='" + (caseX - k) + "'][data-row='" + (caseY + k) + "']:has(div." + typeToken + ")").length > 0) {
-          ptsD2 = ptsD2 + (1 * multiplicateur);
+      var ptsD3 = 0;
+      multiplicateur = 1;
+      for (var i = 1; i < 4; i++) {
+        var tmp_coord = new Coord(coord.x - i, coord.y + i);
+        if (token_in_game[current_player].isInArray(tmp_coord)) {
+          ptsD3 = ptsD3 + multiplicateur;
           multiplicateur++;
         }
         else {
           break;
         }
       }
-      arbre.fils[i].valeur = ptsX + ptsY + ptsD1 + ptsD2;
-      arbre.fils[i].ptsX = ptsX;
-      arbre.fils[i].ptsY = ptsY;
-      arbre.fils[i].ptsD1 = ptsD1;
-      arbre.fils[i].ptsD2 = ptsD2;
+      var ptsD4 = 0;
+      multiplicateur = 1;
+      for (var i = 1; i < 4; i++) {
+        var tmp_coord = new Coord(coord.x + i, coord.y - i);
+        if (token_in_game[current_player].isInArray(tmp_coord)) {
+          ptsD4 = ptsD4 + multiplicateur;
+          multiplicateur++;
+        }
+        else {
+          break;
+        }
+      }
+
+      var valeur = ptsH1 + ptsH2 + ptsV1 + ptsV2 + ptsD1 + ptsD2 + ptsD3 + ptsD4;
 
       //On donne des points pour les contres, si l'ennemi peut gagner avec une case on la bloque
-      var coord = Master.getCoordJetonByColumn(arbre.fils[i].colonne);
-      var endNextMove = false;
-      if (type == IA_PLAYER) {
-        var player_ennemi = IA_PLAYER2;
-        if ($('#typeJoueur2').val() == 0) {
-          player_ennemi = HUMAN_PLAYER;
-        }
-        endNextMove = Master.checkEnd(coord['x'], coord['y'], player_ennemi, true);
+      valeur += Master.checkEnd(coord, true) ? 100 : 0;
+
+      if (typeof virtual_token != "undefined") {
+        virtual_token.forEach(function (colonne, index) {
+          if (index % 2 == 0) {
+            token_in_game[current_player].pop();
+          }
+          else {
+            token_in_game[enemy_player].pop();
+          }
+        });
       }
-      if (type == IA_PLAYER2) {
-        endNextMove = Master.checkEnd(coord['x'], coord['y'], IA_PLAYER, true);
-      }
-      if (endNextMove) {
-        arbre.fils[i].valeur += 100;
-        arbre.fils[i].ptsContre = 100;
-      }
+
+      return valeur;
+    }
+    else {
+      return 1;
     }
   },
-  creerGraph: function(selector,labelsParam,dataParam,labelParam){
-	var ctx = $(selector);
-	var data = {
-		labels: labelsParam,
-		datasets: [
-			{
-				label: labelParam,
-				fill: false,
-				lineTension: 0.1,
-				backgroundColor: "rgba(75,192,192,0.4)",
-				borderColor: "rgba(75,192,192,1)",
-				borderCapStyle: 'butt',
-				borderDash: [],
-				borderDashOffset: 0.0,
-				borderJoinStyle: 'miter',
-				pointBorderColor: "rgba(75,192,192,1)",
-				pointBackgroundColor: "#fff",
-				pointBorderWidth: 1,
-				pointHoverRadius: 5,
-				pointHoverBackgroundColor: "rgba(75,192,192,1)",
-				pointHoverBorderColor: "rgba(220,220,220,1)",
-				pointHoverBorderWidth: 2,
-				pointRadius: 1,
-				pointHitRadius: 10,
-				data: dataParam,
-				spanGaps: false,
-			}
-		]
-	};
-	var myLineChart = new Chart(ctx, {
-		type: 'line',
-		data: data
-	});
+  creerGraph: function (selector, labelsParam, dataParam, labelParam) {
+    var ctx = $(selector);
+    var data = {
+      labels: labelsParam,
+      datasets: [
+        {
+          label: labelParam,
+          fill: false,
+          lineTension: 0.1,
+          backgroundColor: "rgba(75,192,192,0.4)",
+          borderColor: "rgba(75,192,192,1)",
+          borderCapStyle: 'butt',
+          borderDash: [],
+          borderDashOffset: 0.0,
+          borderJoinStyle: 'miter',
+          pointBorderColor: "rgba(75,192,192,1)",
+          pointBackgroundColor: "#fff",
+          pointBorderWidth: 1,
+          pointHoverRadius: 5,
+          pointHoverBackgroundColor: "rgba(75,192,192,1)",
+          pointHoverBorderColor: "rgba(220,220,220,1)",
+          pointHoverBorderWidth: 2,
+          pointRadius: 1,
+          pointHitRadius: 10,
+          data: dataParam,
+          spanGaps: false,
+        }
+      ]
+    };
+    var myLineChart = new Chart(ctx, {
+      type: 'line',
+      data: data
+    });
   }
 }
 

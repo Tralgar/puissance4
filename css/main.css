@@ -50,8 +50,8 @@ table tr button{
 .human_token,.token0{
 	background-color:red;
 }
-.ia_token,.token1{
-	background-color:yellow;
+.token[data-player="1"], .token1 {
+	background-color:gold;
 }
 .token2{
 	background-color:black;
