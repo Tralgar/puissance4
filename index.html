@@ -13,94 +13,113 @@
   <title>Puissance 4</title>
 </head>
 <body>
-	<h1>Puissance 4</h1>
-	<div id="message"></div>
-	<div>
-		<div class="caseJoueur">
-      Nombre de victoire(s) : <span id='nbVictoire1'>0</span>/<span class='nbPartie'>0</span>
-      <br>Joueur 1 :
-			<select style="width:75px" disabled id="typeJoueur1">
-				<option value="1">IA</option>
-			</select>
-			<br>Heuristique
-			<select id="heuristique1">
-				<option value="0">Aléatoire</option>
-				<option value="1" selected>Basique</option>
-				<option value="2">Basique avec Contre</option>
-			</select>
-			<br>Algorithme
-			<select id="algorithme1">
-        <option value="0">Propagation à la création</option>
-        <option value="1" selected>Min max</option>
-        <option value="2">Alpha Beta</option>
-			</select>
-			<br>Prevision sur X coups
-			<select id="nbCoup1">
-				<option value="0">0</option>
-				<option value="1">1</option>
-				<option value="2" selected>2</option>
-				<option value="3">3</option>
-				<option value="4">4</option>
-			</select>
-			
-		</div>
-		
-		<div class="caseJoueur">
-      Nombre de victoire(s) : <span id='nbVictoire2'>0</span>/<span class='nbPartie'>0</span>
-      <br>Joueur 2 :
-			<select style="width:75px" id="typeJoueur2">
-				<option value="0">Humain</option>
-				<option value="2" selected>IA</option>
-			</select>
-			<br>Heuristique
-			<select id="heuristique2">
-				<option value="0" selected>Aléatoire</option>
-				<option value="1">Basique</option>
-				<option value="2">Basique avec Contre</option>
-			</select>
-			<br>Algorithme
-			<select id="algorithme2">
-        <option value="0">Propagation à la création</option>
-        <option value="1" selected>Min max</option>
-        <option value="2">Alpha Beta</option>
-			</select>
-			<br>Prevision sur X coups
-			<select id="nbCoup2">
-				<option value="0">0</option>
-			</select>
-		</div>
-	</div>
-
-	<button id="button-start" value="Start Game">Start game</button>
-  <br>
-  <br>
-  Nombre de parties : <input type="text" id="nbPartie" value="1" size="4" name="nbPartie">
-
-  <div class="caseJoueur">
-    <ul>
-      <li>Temps d'execution de la partie : <span id='tempsPartie'></span></li>
-      <li>Nombre coups de la partie : <span id='nbCoupPartie'></span></li>
-      <br>
-      <li>Temps d'éxécution moyen de la session : <span id='tempsSession'></span></li>
-      <li>Nombre de coups moyen de la session : <span id='nbCoupSession'></span></li>
-    </ul>
-    <canvas id="myChart" width="300" height="80"></canvas>
-    <canvas id="myChart2" width="300" height="80"></canvas>
+<h1>Puissance 4</h1>
+<div>
+  <div class="case case33">
+    <h2>Joueur 1</h2>
+    <br><span>Type : </span>
+    <select style="width:75px" disabled id="typeJoueur1">
+      <option value="1">IA</option>
+    </select>
+    <br><span>Heuristique </span>
+    <select id="heuristique1">
+      <option value="0">Aléatoire</option>
+      <option value="1">Evaluation basique</option>
+      <option value="2">Evaluation avancée</option>
+    </select>
+    <br><span>Algorithme </span>
+    <select id="algorithme1">
+      <option value="0">Propagation à la création</option>
+      <option value="1" selected>Min max</option>
+      <option value="2">Alpha Beta</option>
+    </select>
+    <br><span>Prevision sur X coups </span>
+    <select id="nbCoup1">
+      <option value="0">0</option>
+      <option value="1">1</option>
+      <option value="2" selected>2</option>
+      <option value="3">3</option>
+      <option value="4">4</option>
+    </select>
   </div>
-
+  <div class="case case33">
+    <div class="bloc">
+      <button id="button-start" value="Start Game">Start game</button>
+      <br>
+      <br>
+      Nombre de parties : <input type="text" id="nbPartie" value="1" size="4" name="nbPartie">
+      <br>
+      <br>
+      Nombre de victoires J1 : <span id='nbVictoire1'>0</span>/<span class='nbPartie'>0</span>
+      <br />
+      Nombre de victoires J2 : <span id='nbVictoire2'>0</span>/<span class='nbPartie'>0</span>
+      <br />
+      <br />
+      <div id="message"></div>
+    </div>
+  </div>
+  <div class="case case33">
+    <br>Joueur 2 :
+    <select style="width:75px" id="typeJoueur2">
+      <option value="0">Humain</option>
+      <option value="2" selected>IA</option>
+    </select>
+    <br>Heuristique
+    <select id="heuristique2">
+      <option value="0" selected>Aléatoire</option>
+      <option value="1">Basique</option>
+      <option value="2">Basique avec Contre</option>
+    </select>
+    <br>Algorithme
+    <select id="algorithme2">
+      <option value="0" selected>Min max</option>
+      <option value="1">Alpha Beta</option>
+    </select>
+    <br>Prevision sur X coups
+    <select id="nbCoup2">
+      <option value="0">0</option>
+    </select>
+  </div>
+</div>
+<div class="case case20">
+  <ul>
+    <li>Temps d'execution de la partie : <span id='tempsPartie'></span></li>
+    <li>Nombre coups de la partie : <span id='nbCoupPartie'></span></li>
+    <br>
+    <li>Temps d'éxécution moyen de la session : <span id='tempsSession'></span></li>
+    <li>Nombre de coups moyen de la session : <span id='nbCoupSession'></span></li>
+  </ul>
+  <canvas id="myChart" width="300" height="80"></canvas>
+  <canvas id="myChart2" width="300" height="80"></canvas>
+</div>
+<div class="case case33 casePuissance4">
   <table id="my_puissance4" class="puissance4">
-	  <thead>
-	  <tr id="puissance4-actionRow">
-	    <th><button id="button1" data-col="1">add</button></th>
-	    <th><button id="button2" data-col="2">add</button></th>
-	    <th><button id="button3" data-col="3">add</button></th>
-	    <th><button id="button4" data-col="4">add</button></th>
-	    <th><button id="button5" data-col="5">add</button></th>
-	    <th><button id="button6" data-col="6">add</button></th>
-	    <th><button id="button7" data-col="7">add</button></th>
-	  </tr>
-	  </thead>
-	  <tbody>
+    <thead>
+    <tr id="puissance4-actionRow">
+      <th>
+        <button id="button1" data-col="1">add</button>
+      </th>
+      <th>
+        <button id="button2" data-col="2">add</button>
+      </th>
+      <th>
+        <button id="button3" data-col="3">add</button>
+      </th>
+      <th>
+        <button id="button4" data-col="4">add</button>
+      </th>
+      <th>
+        <button id="button5" data-col="5">add</button>
+      </th>
+      <th>
+        <button id="button6" data-col="6">add</button>
+      </th>
+      <th>
+        <button id="button7" data-col="7">add</button>
+      </th>
+    </tr>
+    </thead>
+    <tbody>
     <tr id="row-6" class="puissance4_row" data-ligne="6">
       <td class="puissance4_column column_1" data-col="1" data-row="6">
       </td>
@@ -197,9 +216,9 @@
       <td class="puissance4_column column_7" data-col="7" data-row="1">
       </td>
     </tr>
-	  </tbody>
-	</table>
-
-  <div id="historique"></div>
+    </tbody>
+  </table>
+</div>
+<div class="case case100" id="historique"></div>
 </body>
 </html>

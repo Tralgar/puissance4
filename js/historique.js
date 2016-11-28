@@ -3,7 +3,9 @@ function Historique() {
   this.aTable = new Array;
 }
 
-function addCoupHistorique(historique, x, y) {
+function addCoupHistorique(historique, y, x) {
+  y = y - 7;
+  if(y<0){y = -y;}
   historique.aCoup.push(new Coup(x, y, current_player));
   var tmp = new Array();
   tmp = historique.aCoup.slice(0);
