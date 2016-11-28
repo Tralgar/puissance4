@@ -30,8 +30,9 @@
 			</select>
 			<br>Algorithme
 			<select id="algorithme1">
-        <option value="0" selected>Min max</option>
-        <option value="1">Alpha Beta</option>
+        <option value="0">Propagation à la création</option>
+        <option value="1" selected>Min max</option>
+        <option value="2">Alpha Beta</option>
 			</select>
 			<br>Prevision sur X coups
 			<select id="nbCoup1">
@@ -59,8 +60,9 @@
 			</select>
 			<br>Algorithme
 			<select id="algorithme2">
-        <option value="0" selected>Min max</option>
-        <option value="1">Alpha Beta</option>
+        <option value="0">Propagation à la création</option>
+        <option value="1" selected>Min max</option>
+        <option value="2">Alpha Beta</option>
 			</select>
 			<br>Prevision sur X coups
 			<select id="nbCoup2">
@@ -86,7 +88,7 @@
     <canvas id="myChart2" width="300" height="80"></canvas>
   </div>
 
-  <table class="puissance4">
+  <table id="my_puissance4" class="puissance4">
 	  <thead>
 	  <tr id="puissance4-actionRow">
 	    <th><button id="button1" data-col="1">add</button></th>

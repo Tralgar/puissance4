@@ -16,17 +16,53 @@ Arbre.prototype.getMax = function () {
   });
 
   return aValeurs.getRandomValue();
+};
 
-  //  var aValeurs = this.fils.map(function (a) {
-  //    return a.valeur;
-  //  });
-  //
-  //  return Math.max.apply(null, aValeurs);
+Arbre.prototype.getMaxMinMax = function () {
+  for (var element of this.fils) {
+    if (element instanceof Noeud) {
+      element.setValeurMinMax(1);
+      if ((this.valeur == 0) || (element.valeur < this.valeur)) {
+        this.valeur = element.valeur;
+      }
+    }
+    else if (element instanceof Feuille) {
+      if ((this.valeur == 0) || (element.valeur < this.valeur)) {
+        this.valeur = element.valeur;
+      }
+    }
+  }
+
+  return this.getMax();
+};
+
+Noeud.prototype.setValeurMinMax = function (level) {
+  var tmp_level = level;
+  for (var element of this.fils) {
+    if (element instanceof Noeud) {
+      element.setValeurMinMax(++tmp_level);
+      if (level % 2 == 0) {
+        if (element.valeur > this.valeur) {
+          this.valeur = element.valeur;
+        }
+      }
+      else {
+        if ((this.valeur == 0) || (element.valeur < this.valeur)) {
+          this.valeur = element.valeur;
+        }
+      }
+    }
+    else if (element instanceof Feuille) {
+      if (element.valeur > this.valeur) {
+        this.valeur = element.valeur;
+      }
+    }
+  }
 };
 
 function Noeud(colonne) {
   this.colonne = colonne;
-  this.valeur = null;
+  this.valeur = 0;
   this.fils = [];
 }
 

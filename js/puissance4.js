@@ -1,6 +1,9 @@
 const HUMAN_PLAYER = 0;
 const IA_PLAYER = 1;
 const IA_PLAYER2 = 2;
+const PROPAGATION = 0
+const MINMAX = 1;
+const ALPHABETA = 2;
 
 var nbPartie = 0;
 var nbCoup = 0;
@@ -24,6 +27,7 @@ var enemy_player = null;
 
 var level_prediction = {};
 var eval_type = {};
+var algo = {};
 
 var token_in_game = [];
 
@@ -38,15 +42,16 @@ var Master = {
     });
 
     $('#puissance4-actionRow th button').click(function () {
-      current_player = HUMAN_PLAYER;
       var coord = Master.addToken($(this).data('col'));
+
+      Master.constructToken();
 
       if (Master.checkEnd(coord)) {
         Master.displayMessage("Vainqueur : Humain");
         Master.endGame();
       }
       else {
-        current_player = IA_PLAYER;
+        Master.setPlayers();
         Master.iAPlay();
       }
     });
@@ -129,6 +134,9 @@ var Master = {
     eval_type[player1] = $('#heuristique1').val();
     eval_type[player2] = $('#heuristique2').val();
 
+    algo[player1] = $('#algorithme1').val();
+    algo[player2] = $('#algorithme2').val();
+
     if (Math.floor((Math.random() * 2) + 1) == 1) {
       current_player = player2;
       enemy_player = IA_PLAYER;
@@ -195,27 +203,28 @@ var Master = {
     Master.disableButton();
     Master.displayMessage("Tour IA " + current_player);
 
-    token_in_game[current_player] = [];
-    token_in_game[enemy_player] = [];
-
-    $('div[data-player]').each(function () {
-      var parent = $(this).parent();
-      token_in_game[$(this).attr('data-player')].push(new Coord(parent.attr('data-col'), parent.attr('data-row')));
-    });
+    Master.constructToken();
 
     var arbre = new Arbre(Master.creerArbre());
 
-    if (token_in_game[current_player].length == 10 && current_player == 1)
-      console.log(JSON.stringify(arbre, null, '\t'));
+    // décommenter pour voir arbre
+    // console.log(JSON.stringify(arbre, null, '\t'));
 
-    var colonne = arbre.getMax();
+    if (algo[current_player] == PROPAGATION) {
+      var colonne = arbre.getMax();
+    }
+    else if (algo[current_player] == MINMAX) {
+      var colonne = arbre.getMaxMinMax();
+    }
+    else {
+      var colonne = arbre.getMaxAlphaBeta();
+    }
+
     if (colonne == 0) {
       colonne = Master.getColumnPlay()[0];
     }
-    var coord = Master.addToken(colonne);
 
-    if (token_in_game[current_player].length == 10 && current_player == 1)
-      console.log(coord);
+    var coord = Master.addToken(colonne);
 
     if (Master.checkEnd(coord)) {
       Master.displayMessage("Vainqueur : IA " + current_player);
@@ -232,6 +241,15 @@ var Master = {
         Master.iAPlay();
       }
     }
+  },
+  constructToken: function () {
+    token_in_game[current_player] = [];
+    token_in_game[enemy_player] = [];
+
+    $('#my_puissance4 tr td > .token').each(function () {
+      var parent = $(this).parent();
+      token_in_game[$(this).attr('data-player')].push(new Coord(parent.attr('data-col'), parent.attr('data-row')));
+    });
   },
   humanPlay: function () {
     //On désactive les boutons des colonnes pleines
@@ -259,10 +277,11 @@ var Master = {
     var i = 0;
     //On check verticalement
     var cpt = 0;
-    for (i = 1; i <= 7; i++) {
+    for (i = 1; i <= 6; i++) {
       if (token_in_game[current_player].isInArray(new Coord(coord.x, i))) {
         cpt++;
         if (cpt == 4) {
+          token_in_game[current_player].pop();
           return true;
         }
       }
@@ -277,6 +296,7 @@ var Master = {
       if (token_in_game[current_player].isInArray(new Coord(i, coord.y))) {
         cpt++;
         if (cpt == 4) {
+          token_in_game[current_player].pop();
           return true;
         }
       }
@@ -299,6 +319,7 @@ var Master = {
       if (token_in_game[current_player].isInArray(new Coord(x, y))) {
         cpt++;
         if (cpt == 4) {
+          token_in_game[current_player].pop();
           return true;
         }
       }
@@ -325,6 +346,7 @@ var Master = {
       if (token_in_game[current_player].isInArray(new Coord(x, y))) {
         cpt++;
         if (cpt == 4) {
+          token_in_game[current_player].pop();
           return true;
         }
       }
@@ -342,7 +364,6 @@ var Master = {
       if (!Master.isFullColumn(i)) {
         return false;
       }
-      j++;
     }
 
     return true;
@@ -406,15 +427,17 @@ var Master = {
       });
     }
 
-    var aValeurs = aFils.map(function (a) {
-      return a.valeur;
-    });
+    if (algo[current_player] == PROPAGATION) {
+      var aValeurs = aFils.map(function (a) {
+        return a.valeur;
+      });
 
-    if (current_level_prediction % 2 == 0) {
-      node.setValeur(Math.max.apply(null, aValeurs));
-    }
-    else {
-      node.setValeur(Math.min.apply(null, aValeurs));
+      if (current_level_prediction % 2 == 0) {
+        node.setValeur(Math.max.apply(null, aValeurs));
+      }
+      else {
+        node.setValeur(Math.min.apply(null, aValeurs));
+      }
     }
 
     node.setFils(aFils);

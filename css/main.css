@@ -14,7 +14,7 @@ table td {
 	border-radius:25px;
 	background-color:black;
 }
-.human_token,.token0{
+.token[data-player="0"],.token0{
 	background-color:red;
 }
 .token[data-player="1"], .token1 {
