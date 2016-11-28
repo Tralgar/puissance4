@@ -1,9 +1,8 @@
 const HUMAN_PLAYER = 0;
 const IA_PLAYER = 1;
 const IA_PLAYER2 = 2;
-const PROPAGATION = 0
+const PROPAGATION = 0;
 const MINMAX = 1;
-const ALPHABETA = 2;
 
 var nbPartie = 0;
 var nbCoup = 0;
@@ -30,10 +29,6 @@ var eval_type = {};
 var algo = {};
 
 var token_in_game = [];
-
-// @todo : axe amélioration -ne pas reconstruire le token_in_game
-// @todo : L'eval prend la meme fonction d'eval pour le min max pour l'adversaire !
-// @todo : eval feuille avec check end pas l'air de fonctionner + level prevision pair impair ca fait quoi ?
 
 var Master = {
   init: function () {
@@ -161,7 +156,6 @@ var Master = {
     enemy_player = tmp_player;
   },
   getCoordTokenByColumn: function (column_number, virtual_token) {
-    // @todo : axe d'amélioration par ex ID et pas de foreach etc...
     var y = 0;
     $('.column_' + column_number).toArray().reverse().forEach(function (element) {
       if ($(element).has('div').length == 0) {
@@ -269,19 +263,26 @@ var Master = {
     }
     return aColumns;
   },
-  checkEnd: function (coord, forcePrevision) {
+  checkEnd: function (coord, forcePrevision, ennemy) {
+    if (typeof ennemy !== 'undefined') {
+      var player = enemy_player;
+    }
+    else {
+      var player = current_player;
+    }
+
     if (typeof forcePrevision !== "undefined") {
-      token_in_game[current_player].push(coord);
+      token_in_game[player].push(coord);
     }
 
     var i = 0;
     //On check verticalement
     var cpt = 0;
     for (i = 1; i <= 6; i++) {
-      if (token_in_game[current_player].isInArray(new Coord(coord.x, i))) {
+      if (token_in_game[player].isInArray(new Coord(coord.x, i))) {
         cpt++;
         if (cpt == 4) {
-          token_in_game[current_player].pop();
+          token_in_game[player].pop();
           return true;
         }
       }
@@ -293,10 +294,10 @@ var Master = {
     //On check horizontalement
     cpt = 0;
     for (i = 1; i <= 7; i++) {
-      if (token_in_game[current_player].isInArray(new Coord(i, coord.y))) {
+      if (token_in_game[player].isInArray(new Coord(i, coord.y))) {
         cpt++;
         if (cpt == 4) {
-          token_in_game[current_player].pop();
+          token_in_game[player].pop();
           return true;
         }
       }
@@ -316,10 +317,10 @@ var Master = {
     }
 
     while (x <= 7 && y <= 6) {
-      if (token_in_game[current_player].isInArray(new Coord(x, y))) {
+      if (token_in_game[player].isInArray(new Coord(x, y))) {
         cpt++;
         if (cpt == 4) {
-          token_in_game[current_player].pop();
+          token_in_game[player].pop();
           return true;
         }
       }
@@ -343,10 +344,10 @@ var Master = {
     }
 
     while (x >= 1 && y <= 6) {
-      if (token_in_game[current_player].isInArray(new Coord(x, y))) {
+      if (token_in_game[player].isInArray(new Coord(x, y))) {
         cpt++;
         if (cpt == 4) {
-          token_in_game[current_player].pop();
+          token_in_game[player].pop();
           return true;
         }
       }
@@ -358,7 +359,7 @@ var Master = {
       y++;
     }
 
-    token_in_game[current_player].pop();
+    token_in_game[player].pop();
 
     for (var i = 1; i <= 7; i++) {
       if (!Master.isFullColumn(i)) {
@@ -428,15 +429,22 @@ var Master = {
     }
 
     if (algo[current_player] == PROPAGATION) {
+      var tmp_virtual_token = virtual_token;
+      if (tmp_virtual_token.length >= 1) {
+        tmp_virtual_token.pop()
+      }
+
       var aValeurs = aFils.map(function (a) {
         return a.valeur;
       });
 
       if (current_level_prediction % 2 == 0) {
-        node.setValeur(Math.max.apply(null, aValeurs));
+        node.setValeur(Math.max.apply(null, aValeurs) + Master.evalFeuille(colonne, tmp_virtual_token));
+        //node.setValeur(Math.max.apply(null, aValeurs));
       }
       else {
-        node.setValeur(Math.min.apply(null, aValeurs));
+        node.setValeur(Math.min.apply(null, aValeurs) - Master.evalFeuille(colonne, tmp_virtual_token, true));
+        //node.setValeur(Math.min.apply(null, aValeurs));
       }
     }
 
@@ -445,8 +453,7 @@ var Master = {
 
     return node;
   },
-  evalFeuille: function (colonne, virtual_token) {
-    // @todo : est-ce que le virtual token est bien dans l'ordre ou des que la longueur est 1 c'est ennemi ou current ?
+  evalFeuille: function (colonne, virtual_token, ennemy) {
     if (eval_type[current_player] == 0) {
       return Math.floor((Math.random() * 100) + 1);
     }
@@ -464,12 +471,19 @@ var Master = {
         });
       }
 
+      if (typeof ennemy !== 'undefined') {
+        var player = enemy_player;
+      }
+      else {
+        var player = current_player;
+      }
+
       // horizontal
       var ptsH1 = 0;
       var multiplicateur = 1;
       for (var i = 1; i < 4; i++) {
         var tmp_coord = new Coord(coord.x + i, coord.y);
-        if (token_in_game[current_player].isInArray(tmp_coord) > -1) {
+        if (token_in_game[player].isInArray(tmp_coord)) {
           ptsH1 = ptsH1 + multiplicateur;
           multiplicateur++;
         }
@@ -482,7 +496,7 @@ var Master = {
       multiplicateur = 1;
       for (var i = 1; i < 4; i++) {
         var tmp_coord = new Coord(coord.x - i, coord.y);
-        if (token_in_game[current_player].isInArray(tmp_coord) > -1) {
+        if (token_in_game[player].isInArray(tmp_coord)) {
           ptsH2 = ptsH2 + multiplicateur;
           multiplicateur++;
         }
@@ -496,7 +510,7 @@ var Master = {
       multiplicateur = 1;
       for (var i = 1; i < 4; i++) {
         var tmp_coord = new Coord(coord.x, coord.y + i);
-        if (token_in_game[current_player].isInArray(tmp_coord)) {
+        if (token_in_game[player].isInArray(tmp_coord)) {
           ptsV1 = ptsV1 + multiplicateur;
           multiplicateur++;
         }
@@ -509,7 +523,7 @@ var Master = {
       multiplicateur = 1;
       for (var i = 1; i < 4; i++) {
         var tmp_coord = new Coord(coord.x, coord.y - i);
-        if (token_in_game[current_player].isInArray(tmp_coord)) {
+        if (token_in_game[player].isInArray(tmp_coord)) {
           ptsV2 = ptsV2 + multiplicateur;
           multiplicateur++;
         }
@@ -523,7 +537,7 @@ var Master = {
       multiplicateur = 1;
       for (var i = 1; i < 4; i++) {
         var tmp_coord = new Coord(coord.x + i, coord.y + i);
-        if (token_in_game[current_player].isInArray(tmp_coord)) {
+        if (token_in_game[player].isInArray(tmp_coord)) {
           ptsD1 = ptsD1 + multiplicateur;
           multiplicateur++;
         }
@@ -535,7 +549,7 @@ var Master = {
       multiplicateur = 1;
       for (var i = 1; i < 4; i++) {
         var tmp_coord = new Coord(coord.x - i, coord.y - i);
-        if (token_in_game[current_player].isInArray(tmp_coord)) {
+        if (token_in_game[player].isInArray(tmp_coord)) {
           ptsD2 = ptsD2 + multiplicateur;
           multiplicateur++;
         }
@@ -547,7 +561,7 @@ var Master = {
       multiplicateur = 1;
       for (var i = 1; i < 4; i++) {
         var tmp_coord = new Coord(coord.x - i, coord.y + i);
-        if (token_in_game[current_player].isInArray(tmp_coord)) {
+        if (token_in_game[player].isInArray(tmp_coord)) {
           ptsD3 = ptsD3 + multiplicateur;
           multiplicateur++;
         }
@@ -559,7 +573,7 @@ var Master = {
       multiplicateur = 1;
       for (var i = 1; i < 4; i++) {
         var tmp_coord = new Coord(coord.x + i, coord.y - i);
-        if (token_in_game[current_player].isInArray(tmp_coord)) {
+        if (token_in_game[player].isInArray(tmp_coord)) {
           ptsD4 = ptsD4 + multiplicateur;
           multiplicateur++;
         }
@@ -570,8 +584,8 @@ var Master = {
 
       var valeur = ptsH1 + ptsH2 + ptsV1 + ptsV2 + ptsD1 + ptsD2 + ptsD3 + ptsD4;
 
-      //On donne des points pour les contres, si l'ennemi peut gagner avec une case on la bloque
-      valeur += Master.checkEnd(coord, true) ? 100 : 0;
+      // si on peut gagner, on ajoute 100 pts
+      valeur += Master.checkEnd(coord, true, true) ? 100 : 0;
 
       if (typeof virtual_token != "undefined") {
         virtual_token.forEach(function (colonne, index) {
@@ -585,9 +599,6 @@ var Master = {
       }
 
       return valeur;
-    }
-    else {
-      return 1;
     }
   },
   creerGraph: function (selector, labelsParam, dataParam, labelParam) {
