@@ -457,7 +457,7 @@ var Master = {
     if (eval_type[current_player] == 0) {
       return Math.floor((Math.random() * 100) + 1);
     }
-    else if (eval_type[current_player] == 1) {
+    else if (eval_type[current_player] == 1 || eval_type[current_player] == 2) {
       var coord = Master.getCoordTokenByColumn(colonne, virtual_token);
 
       if (typeof virtual_token !== 'undefined') {
@@ -583,7 +583,8 @@ var Master = {
       }
 
       var valeur = ptsH1 + ptsH2 + ptsV1 + ptsV2 + ptsD1 + ptsD2 + ptsD3 + ptsD4;
-
+	
+	if (eval_type[current_player] == 2) {
       // si on peut gagner, on ajoute 100 pts
       valeur += Master.checkEnd(coord, true, true) ? 100 : 0;
 
@@ -597,6 +598,7 @@ var Master = {
           }
         });
       }
+	}
 
       return valeur;
     }
