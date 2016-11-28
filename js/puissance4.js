@@ -246,6 +246,7 @@ var Master = {
     });
   },
   humanPlay: function () {
+	current_player = HUMAN_PLAYER;
     //On désactive les boutons des colonnes pleines
     for (var i = 1; i <= 7; i++) {
       if (Master.isFullColumn(i)) {
@@ -470,7 +471,7 @@ var Master = {
           }
         });
       }
-
+	
       if (typeof ennemy !== 'undefined') {
         var player = enemy_player;
       }
@@ -582,22 +583,24 @@ var Master = {
         }
       }
 
-      var valeur = ptsH1 + ptsH2 + ptsV1 + ptsV2 + ptsD1 + ptsD2 + ptsD3 + ptsD4;
-	
-	if (eval_type[current_player] == 2) {
-      // si on peut gagner, on ajoute 100 pts
-      valeur += Master.checkEnd(coord, true, true) ? 100 : 0;
+	var valeur = ptsH1 + ptsH2 + ptsV1 + ptsV2 + ptsD1 + ptsD2 + ptsD3 + ptsD4;
+	if (eval_type[current_player] == 1) {
+		// si on peut gagner, on ajoute 100 pts
+		if(Master.checkEnd(coord, true, true)){
+			valeur +=100;
+		}
 
-      if (typeof virtual_token != "undefined") {
-        virtual_token.forEach(function (colonne, index) {
-          if (index % 2 == 0) {
-            token_in_game[current_player].pop();
-          }
-          else {
-            token_in_game[enemy_player].pop();
-          }
-        });
-      }
+	}
+	
+	if (typeof virtual_token != "undefined") {
+		virtual_token.forEach(function (colonne, index) {
+			if (index % 2 == 0) {
+				token_in_game[current_player].pop();
+			}
+			else {
+				token_in_game[enemy_player].pop();
+			}
+		});
 	}
 
       return valeur;
