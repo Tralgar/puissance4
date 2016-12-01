@@ -14,6 +14,8 @@ Arbre.prototype.getMax = function () {
       aValeurs = [valeur.colonne];
     }
   });
+  console.log(JSON.stringify(this, null, '\t'));
+  console.log(aValeurs);
 
   return aValeurs.getRandomValue();
 };
@@ -47,7 +49,7 @@ Noeud.prototype.setValeurMinMax = function (level) {
         }
       }
       else {
-        if ((this.valeur == 0) || (element.valeur < this.valeur)) {
+        if (element.valeur < this.valeur) {
           this.valeur = element.valeur;
         }
       }

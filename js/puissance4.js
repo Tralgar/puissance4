@@ -157,7 +157,7 @@ var Master = {
   },
   getCoordTokenByColumn: function (column_number, virtual_token) {
     var y = 0;
-    $('.column_' + column_number).toArray().reverse().forEach(function (element) {
+    $('.column_' + column_number).toArray().forEach(function (element) {
       if ($(element).has('div').length == 0) {
         y = $(element).parent().data('ligne');
       }
@@ -201,9 +201,6 @@ var Master = {
 
     var arbre = new Arbre(Master.creerArbre());
 
-    // décommenter pour voir arbre
-    // console.log(JSON.stringify(arbre, null, '\t'));
-
     if (algo[current_player] == PROPAGATION) {
       var colonne = arbre.getMax();
     }
@@ -246,7 +243,7 @@ var Master = {
     });
   },
   humanPlay: function () {
-	current_player = HUMAN_PLAYER;
+    current_player = HUMAN_PLAYER;
     //On désactive les boutons des colonnes pleines
     for (var i = 1; i <= 7; i++) {
       if (Master.isFullColumn(i)) {
@@ -419,7 +416,12 @@ var Master = {
 
     if (current_level_prediction == level_prediction[current_player]) {
       Master.getColumnPlay(virtual_token).forEach(function (colonne) {
-        aFils.push(new Feuille(colonne, Master.evalFeuille(colonne, virtual_token)));
+        if (current_level_prediction % 2 == 0) {
+          aFils.push(new Feuille(colonne, Master.evalFeuille(colonne, virtual_token)));
+        }
+        else{
+          aFils.push(new Feuille(colonne, Master.evalFeuille(colonne, virtual_token, true)));
+        }
       });
     }
     else {
@@ -436,7 +438,7 @@ var Master = {
       }
 
       var aValeurs = aFils.map(function (a) {
-        return a.valeur;
+        return Math.abs(a.valeur);
       });
 
       if (current_level_prediction % 2 == 0) {
@@ -471,7 +473,7 @@ var Master = {
           }
         });
       }
-	
+
       if (typeof ennemy !== 'undefined') {
         var player = enemy_player;
       }
@@ -583,25 +585,30 @@ var Master = {
         }
       }
 
-	var valeur = ptsH1 + ptsH2 + ptsV1 + ptsV2 + ptsD1 + ptsD2 + ptsD3 + ptsD4;
-	if (eval_type[current_player] == 1) {
-		// si on peut gagner, on ajoute 100 pts
-		if(Master.checkEnd(coord, true, true)){
-			valeur +=100;
-		}
+      var valeur = ptsH1 + ptsH2 + ptsV1 + ptsV2 + ptsD1 + ptsD2 + ptsD3 + ptsD4;
 
-	}
-	
-	if (typeof virtual_token != "undefined") {
-		virtual_token.forEach(function (colonne, index) {
-			if (index % 2 == 0) {
-				token_in_game[current_player].pop();
-			}
-			else {
-				token_in_game[enemy_player].pop();
-			}
-		});
-	}
+      // si on peut gagner, on ajoute 100 pts
+      if (Master.checkEnd(coord, true)) {
+        valeur += 100;
+      }
+      if (Master.checkEnd(coord, true, true)) {
+        valeur += 100;
+      }
+
+      if (typeof virtual_token != "undefined") {
+        virtual_token.forEach(function (colonne, index) {
+          if (index % 2 == 0) {
+            token_in_game[current_player].pop();
+          }
+          else {
+            token_in_game[enemy_player].pop();
+          }
+        });
+      }
+
+      if(player == enemy_player){
+        valeur = - valeur;
+      }
 
       return valeur;
     }
