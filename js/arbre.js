@@ -14,8 +14,8 @@ Arbre.prototype.getMax = function () {
       aValeurs = [valeur.colonne];
     }
   });
-  console.log(JSON.stringify(this, null, '\t'));
-  console.log(aValeurs);
+  //console.log(JSON.stringify(this, null, '\t'));
+  //console.log(aValeurs);
 
   return aValeurs.getRandomValue();
 };

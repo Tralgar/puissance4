@@ -587,13 +587,16 @@ var Master = {
 
       var valeur = ptsH1 + ptsH2 + ptsV1 + ptsV2 + ptsD1 + ptsD2 + ptsD3 + ptsD4;
 
-      // si on peut gagner, on ajoute 100 pts
-      if (Master.checkEnd(coord, true)) {
-        valeur += 100;
-      }
-      if (Master.checkEnd(coord, true, true)) {
-        valeur += 100;
-      }
+	  //Evaluation avancé uniquement
+	  if (eval_type[current_player] == 1) {	
+		  // si on peut gagner, on ajoute 100 pts
+		  if (Master.checkEnd(coord, true)) {
+			valeur += 100;
+		  }
+		  if (Master.checkEnd(coord, true, true)) {
+			valeur += 100;
+		  }
+	  }
 
       if (typeof virtual_token != "undefined") {
         virtual_token.forEach(function (colonne, index) {
